@@ -1,4 +1,4 @@
-package me.kalmemarq.common;
+package me.kalmemarq.common.packet;
 
 public class DisconnectPacket extends Packet {
     private String reason;
@@ -23,5 +23,9 @@ public class DisconnectPacket extends Packet {
     @Override
     public void apply(PacketListener packetListener) {
         packetListener.onDisconnectPacket(this);
+    }
+
+    public String getReason() {
+        return this.reason;
     }
 }

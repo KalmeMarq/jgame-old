@@ -1,4 +1,4 @@
-package me.kalmemarq.common;
+package me.kalmemarq.common.packet;
 
 import org.jetbrains.annotations.Nullable;
 

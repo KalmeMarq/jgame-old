@@ -6,6 +6,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
+import me.kalmemarq.common.packet.Packet;
+import me.kalmemarq.common.packet.PacketCallbacks;
+import me.kalmemarq.common.packet.PacketDecoder;
+import me.kalmemarq.common.packet.PacketEncoder;
 
 import java.net.SocketAddress;
 
@@ -70,7 +74,7 @@ public class NetworkConnection extends SimpleChannelInboundHandler<Packet> {
 
     public void disconnect() {
         if (this.isOpen()) {
-            this.channel.close().awaitUninterruptibly();
+            this.channel.close().syncUninterruptibly();
         }
     }
 

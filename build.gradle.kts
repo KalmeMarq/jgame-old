@@ -10,6 +10,7 @@ val jbAnnotationsVersion = "24.0.1"
 val lwjglVersion = "3.3.2"
 val jomlVersion = "1.10.5"
 val lwjglNatives = "natives-windows"
+val jacksonVersion = "2.15.2"
 
 repositories {
     mavenCentral()
@@ -37,6 +38,9 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation("org.joml", "joml", jomlVersion)
+
+    implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
     compileOnly("org.jetbrains:annotations:$jbAnnotationsVersion")
 
