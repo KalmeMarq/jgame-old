@@ -1,0 +1,5 @@
+chars:
+  - char: "\u0042"
+    bearingX: 0
+    bearingY: 0
+    advance: 7
