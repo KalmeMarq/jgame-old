@@ -11,9 +11,13 @@ val lwjglVersion = "3.3.2"
 val jomlVersion = "1.10.5"
 val lwjglNatives = "natives-windows"
 val jacksonVersion = "2.15.2"
+val brigadierVersion = "1.0.18"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://libraries.minecraft.net")
+    }
 }
 
 dependencies {
@@ -38,6 +42,8 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
     implementation("org.joml", "joml", jomlVersion)
+
+    implementation("com.mojang:brigadier:$brigadierVersion")
 
     implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
