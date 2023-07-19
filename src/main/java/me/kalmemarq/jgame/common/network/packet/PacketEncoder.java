@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common.packet;
+package me.kalmemarq.jgame.common.network.packet;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

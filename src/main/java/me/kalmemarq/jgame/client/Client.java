@@ -6,19 +6,20 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import me.kalmemarq.jgame.client.network.ClientNetworkHandler;
 import me.kalmemarq.jgame.client.screen.ChatScreen;
 import me.kalmemarq.jgame.client.screen.ConnectScreen;
 import me.kalmemarq.jgame.client.screen.DisconnectedScreen;
 import me.kalmemarq.jgame.client.screen.Screen;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.logger.LoggerPrintStream;
-import me.kalmemarq.jgame.common.NetworkConnection;
+import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.Util;
-import me.kalmemarq.jgame.common.packet.CommandC2SPacket;
-import me.kalmemarq.jgame.common.packet.DisconnectPacket;
-import me.kalmemarq.jgame.common.packet.MessagePacket;
-import me.kalmemarq.jgame.common.packet.Packet;
-import me.kalmemarq.jgame.common.packet.PingPacket;
+import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
+import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
+import me.kalmemarq.jgame.common.network.packet.MessagePacket;
+import me.kalmemarq.jgame.common.network.packet.Packet;
+import me.kalmemarq.jgame.common.network.packet.PingPacket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -90,7 +91,6 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
 
                 if (this.screen != null) this.screen.render();
 
-
                 this.window.swapBuffers();
 
                 ++frameCounter;
@@ -110,6 +110,7 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
     }
 
     public void tick() {
+        if (this.screen != null) this.screen.tick();
     }
 
     public void setScreen(@Nullable Screen screen) {
@@ -141,35 +142,8 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
                             }
 
                             NetworkConnection.addHandlers(channel.pipeline());
-                            connection.setPacketListener(new Packet.PacketListener() {
-                                @Override
-                                public void onMessagePacket(MessagePacket packet) {
-                                    messages.add(("[" + packet.getCreatedTime().toString() + "] <" + packet.getUsername() + "> " + packet.getMessage()).toUpperCase(Locale.ROOT));
-                                }
-
-                                @Override
-                                public void onCommandC2SPacket(CommandC2SPacket packet) {
-                                }
-
-                                @Override
-                                public void onDisconnectPacket(DisconnectPacket packet) {
-                                    System.out.println("disc");
-                                    setScreen(new DisconnectedScreen(packet.getReason()));
-                                    connection.disconnect();
-                                    connection = null;
-                                    messages.clear();
-                                }
-
-                                @Override
-                                public void onPingPacket(PingPacket packet) {
-                                    messages.add(("Your ping is " + (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - packet.getNanoTime())) + " ms").toUpperCase(Locale.ROOT));
-                                }
-
-                                @Override
-                                public void onDisconnected() {
-                                }
-                            });
-                            channel.pipeline().addLast("packet_handler", connection);
+                            Client.this.connection.setPacketListener(new ClientNetworkHandler(Client.this, Client.this.connection));
+                            channel.pipeline().addLast("packet_handler", Client.this.connection);
                         }
                     });
 
@@ -178,8 +152,8 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
             this.setScreen(new ChatScreen());
         } catch (Exception e) {
             this.setScreen(new DisconnectedScreen("COULD NOT CONNECT"));
-            connection = null;
-            messages.clear();
+            this.connection = null;
+            this.messages.clear();
         }
     }
 

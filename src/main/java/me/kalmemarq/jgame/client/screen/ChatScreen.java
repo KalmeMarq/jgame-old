@@ -1,9 +1,9 @@
 package me.kalmemarq.jgame.client.screen;
 
 import me.kalmemarq.jgame.client.Renderer;
-import me.kalmemarq.jgame.common.packet.CommandC2SPacket;
-import me.kalmemarq.jgame.common.packet.MessagePacket;
-import me.kalmemarq.jgame.common.packet.PingPacket;
+import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
+import me.kalmemarq.jgame.common.network.packet.MessagePacket;
+import me.kalmemarq.jgame.common.network.packet.PingPacket;
 import org.lwjgl.glfw.GLFW;
 
 import java.time.Instant;

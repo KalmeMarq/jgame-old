@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common.packet;
+package me.kalmemarq.jgame.common.network.packet;
 public class CommandC2SPacket extends Packet {
     private String command;
 

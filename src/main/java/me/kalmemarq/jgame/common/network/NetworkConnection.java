@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common;
+package me.kalmemarq.jgame.common.network;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -6,10 +6,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
-import me.kalmemarq.jgame.common.packet.Packet;
-import me.kalmemarq.jgame.common.packet.PacketCallbacks;
-import me.kalmemarq.jgame.common.packet.PacketDecoder;
-import me.kalmemarq.jgame.common.packet.PacketEncoder;
+import me.kalmemarq.jgame.common.network.packet.Packet;
+import me.kalmemarq.jgame.common.network.packet.PacketCallbacks;
+import me.kalmemarq.jgame.common.network.packet.PacketDecoder;
+import me.kalmemarq.jgame.common.network.packet.PacketEncoder;
 
 import java.net.SocketAddress;
 

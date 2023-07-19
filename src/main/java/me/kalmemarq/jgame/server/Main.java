@@ -1,18 +1,8 @@
 package me.kalmemarq.jgame.server;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.ThreadDeathWatcher;
-import me.kalmemarq.jgame.common.NetworkConnection;
-import me.kalmemarq.jgame.common.Util;
-import me.kalmemarq.jgame.common.packet.CommandC2SPacket;
-import me.kalmemarq.jgame.common.packet.DisconnectPacket;
-import me.kalmemarq.jgame.common.packet.MessagePacket;
-import me.kalmemarq.jgame.common.packet.Packet;
-import me.kalmemarq.jgame.common.packet.PingPacket;
-import org.jetbrains.annotations.NotNull;
+import me.kalmemarq.jgame.common.network.NetworkConnection;
+import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
+import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -81,14 +71,14 @@ public class Main {
                                 } finally {
                                     frame.dispose();
                                 }
-                            } else if (line.startsWith("/msg ") || !line.startsWith("/")) {
-                                for (NetworkConnection connection : connections) {
+                            } else if (line.startsWith("/msg ")) {
+                                for (NetworkConnection connection : server.connections) {
                                     connection.sendPacket(new MessagePacket("Server", Instant.now(), line.substring(4)));
                                 }
                             } else if (line.startsWith("/playercount")) {
-                                chatArea.append("Player Count: " + connections.size() + "\n");
+                                chatArea.append("Player Count: " + server.connections.size() + "\n");
                             } else if (line.startsWith("/kickall")) {
-                                for (Iterator<NetworkConnection> it = connections.iterator(); it.hasNext();) {
+                                for (Iterator<NetworkConnection> it = server.connections.iterator(); it.hasNext();) {
                                     NetworkConnection connection = it.next();
                                     connection.sendPacket(new DisconnectPacket("YOU WERE KICKED!"));
                                     it.remove();

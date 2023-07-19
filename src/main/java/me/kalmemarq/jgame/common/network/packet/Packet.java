@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common.packet;
+package me.kalmemarq.jgame.common.network.packet;
 
 import java.util.List;
 
