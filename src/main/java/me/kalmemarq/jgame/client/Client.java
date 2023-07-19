@@ -36,11 +36,14 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
     public final Font font;
     public final TextureManager textureManager;
     private boolean running;
+    private GameOptions options;
     public NetworkConnection connection;
     public List<String> messages = new ArrayList<>();
     private Screen screen;
 
-    public Client() {
+    public Client(File gameDir) {
+        this.options = new GameOptions(gameDir);
+        this.options.load();
         this.window = new Window(800, 600, "JGame");
         this.textureManager = new TextureManager();
         this.font = new Font();
