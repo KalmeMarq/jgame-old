@@ -92,7 +92,7 @@ public class Server implements Destroyable {
                         ch.pipeline().addLast("packet_handler", connection);
                     }
                 });
-        channel = bootstrap.bind("localhost", 8080).sync().channel();
+        this.channel = bootstrap.bind("localhost", 8080).sync().channel();
     }
 
     interface MessageListener {

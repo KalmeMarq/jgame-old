@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
+import me.kalmemarq.jgame.client.resource.SyncResourceReloader;
 import me.kalmemarq.jgame.common.Util;
 
 import java.util.ArrayList;
@@ -11,34 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Font {
-    private final Map<Integer, Glyph> glyphMap = new HashMap<>();
-
-    public void load() {
-        ObjectMapper mapper = new ObjectMapper();
-
-        try {
-            JsonNode fontObj = mapper.readTree(Util.readString(Client.class.getResourceAsStream("/font.json")));
-            int advance = fontObj.has("advance") ? fontObj.get("advance").intValue() : 8;
-
-            if (fontObj.isObject()) {
-                ArrayNode chars = (ArrayNode) fontObj.get("chars");
-
-                for (int i = 0; i < chars.size(); ++i) {
-                    char[] a = chars.get(i).textValue().toCharArray();
-                    int rowV = i * 8;
-
-                    for (int j = 0; j < a.length; ++j) {
-                        int colU = j * 8;
-                        if (a[j] == '\u0000') continue;
-                        this.glyphMap.put((int) a[j], new Glyph((colU) / 256.0f, (rowV) / 256.0f, (colU + 8) / 256.0f, (rowV + 8) / 256.0f, advance));
-                    }
-                }
-            }
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-    }
+public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> {
+    private Map<Integer, Glyph> glyphMap = new HashMap<>();
 
     public void drawText(String text, int x, int y, int color) {
         if (text == null) return;
@@ -99,6 +75,40 @@ public class Font {
 
     public int textWidth(String text) {
         return text.length() * 8;
+    }
+
+    @Override
+    protected Map<Integer, Glyph> prepare() {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<Integer, Glyph> map = new HashMap<>();
+
+        try {
+            JsonNode fontObj = mapper.readTree(Util.readString(Client.class.getResourceAsStream("/font.json")));
+            int advance = fontObj.has("advance") ? fontObj.get("advance").intValue() : 8;
+
+            if (fontObj.isObject()) {
+                ArrayNode chars = (ArrayNode) fontObj.get("chars");
+
+                for (int i = 0; i < chars.size(); ++i) {
+                    char[] a = chars.get(i).textValue().toCharArray();
+                    int rowV = i * 8;
+
+                    for (int j = 0; j < a.length; ++j) {
+                        int colU = j * 8;
+                        if (a[j] == '\u0000') continue;
+                        map.put((int) a[j], new Glyph((colU) / 256.0f, (rowV) / 256.0f, (colU + 8) / 256.0f, (rowV + 8) / 256.0f, advance));
+                    }
+                }
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    @Override
+    protected void apply(Map<Integer, Glyph> prepared) {
+        this.glyphMap = prepared;
     }
 
     static class Glyph {

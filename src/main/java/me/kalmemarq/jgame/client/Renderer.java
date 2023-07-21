@@ -1,9 +1,29 @@
 package me.kalmemarq.jgame.client;
 
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 public class Renderer {
+    private static Matrix4f PROJECTION_MATRIX = new Matrix4f().identity();
+    private static Matrix4f MODE_VIEW_MATRIX = new Matrix4f().identity();
+
+    public static void setProjectionMatrix(Matrix4f matrix) {
+        PROJECTION_MATRIX = matrix;
+    }
+
+    public static Matrix4f getProjectionMatrix() {
+        return PROJECTION_MATRIX;
+    }
+
+    public static void setModeViewMatrix(Matrix4f matrix) {
+        MODE_VIEW_MATRIX = matrix;
+    }
+
+    public static Matrix4f getModeViewMatrix() {
+        return MODE_VIEW_MATRIX;
+    }
+
     private static boolean textured2DCap = false;
     private static boolean blendCap = false;
 

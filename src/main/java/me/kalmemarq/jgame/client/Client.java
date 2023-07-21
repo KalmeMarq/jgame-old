@@ -7,19 +7,17 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import me.kalmemarq.jgame.client.network.ClientNetworkHandler;
+import me.kalmemarq.jgame.client.resource.ResourceLoader;
+import me.kalmemarq.jgame.client.resource.SyncResourceReloader;
 import me.kalmemarq.jgame.client.screen.ChatScreen;
 import me.kalmemarq.jgame.client.screen.ConnectScreen;
 import me.kalmemarq.jgame.client.screen.DisconnectedScreen;
 import me.kalmemarq.jgame.client.screen.Screen;
 import me.kalmemarq.jgame.common.Destroyable;
+import me.kalmemarq.jgame.common.ThreadExecutor;
 import me.kalmemarq.jgame.common.logger.LoggerPrintStream;
 import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.Util;
-import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
-import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
-import me.kalmemarq.jgame.common.network.packet.MessagePacket;
-import me.kalmemarq.jgame.common.network.packet.Packet;
-import me.kalmemarq.jgame.common.network.packet.PingPacket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -29,9 +27,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
-public class Client implements Destroyable, Window.WindowEventHandler, Window.MouseEventHandler, Window.KeyboardEventHandler {
+public class Client extends ThreadExecutor implements Destroyable, Window.WindowEventHandler, Window.MouseEventHandler, Window.KeyboardEventHandler {
     public final Window window;
     public final Font font;
     public final TextureManager textureManager;
@@ -40,6 +37,9 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
     public NetworkConnection connection;
     public List<String> messages = new ArrayList<>();
     private Screen screen;
+    private ResourceLoader resourceLoader;
+
+    private ShaderManager shaderManager;
 
     public Client(File gameDir) {
         this.options = new GameOptions(gameDir);
@@ -47,6 +47,8 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
         this.window = new Window(800, 600, "JGame");
         this.textureManager = new TextureManager();
         this.font = new Font();
+        this.resourceLoader = new ResourceLoader();
+        this.shaderManager = new ShaderManager();
     }
 
     public void run() {
@@ -55,11 +57,13 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
 
         this.window.init(this, this, this);
         this.running = true;
-        this.font.load();
         Renderer.enableTexture();
         this.textureManager.bindTexture("/font.png");
 
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+        this.resourceLoader.start(List.of(this.shaderManager, this.textureManager, this.font), Util.RELOADER_WORKER, this, () -> {
+        });
 
         try {
             long lastTime = System.currentTimeMillis();
@@ -72,6 +76,8 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
 
             while (this.running) {
                 if (this.window.shouldClose()) this.running = false;
+
+                this.runQueueTask();
 
                 long now = System.nanoTime();
                 double nsPerTick = 1E9D / 20;
@@ -92,7 +98,21 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
                 Renderer.loadIdentity();
                 Renderer.translate(0, 0, -2000.0f);
 
-                if (this.screen != null) this.screen.render();
+                if (this.resourceLoader.isActive()) {
+                    Renderer.disableTexture();
+                    Renderer.begin(Renderer.PrimitiveType.QUADS);
+                    Renderer.color(1.0f, 1.0f, 1.0f, 1.0f);
+                    Renderer.vertex(0, this.window.getScaledHeight() - 23, 0);
+                    Renderer.vertex(0, this.window.getScaledHeight() - 12, 0);
+                    Renderer.vertex(this.window.getScaledWidth() * this.resourceLoader.getProgress(), this.window.getScaledHeight() - 12, 0);
+                    Renderer.vertex(this.window.getScaledWidth() * this.resourceLoader.getProgress(), this.window.getScaledHeight() - 23, 0);
+                    Renderer.end();
+                    Renderer.enableTexture();
+
+                    this.font.drawText("PROGRESS: " + (int)(this.resourceLoader.getProgress() * 100) + "%", 1, this.window.getScaledHeight() - 40, 0xFF_FFFFFF);
+                } else {
+                    if (this.screen != null) this.screen.render();
+                }
 
                 this.window.swapBuffers();
 
@@ -166,6 +186,8 @@ public class Client implements Destroyable, Window.WindowEventHandler, Window.Mo
 
     @Override
     public void destroy() {
+        this.shaderManager.destroy();
+        Util.shutdownWorkers();
         this.textureManager.destroy();
         this.window.destroy();
     }
