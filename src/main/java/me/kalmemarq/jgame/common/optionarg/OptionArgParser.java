@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common;
+package me.kalmemarq.jgame.common.optionarg;
 
 import java.util.ArrayList;
 import java.util.HashMap;

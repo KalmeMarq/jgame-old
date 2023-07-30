@@ -1,0 +1,43 @@
+{
+  "vertex": "position_texture_color",
+  "fragment": "position_texture_color",
+  "attributes": [
+    {
+      "name": "aPosition",
+      "type": "float3"
+    },
+    {
+      "name": "aTexCoord",
+      "type": "float2"
+    },
+    {
+      "name": "aColor",
+      "type": "float4"
+    }
+  ],
+  "samplers": [
+    {
+      "name": "uSampler0"
+    }
+  ],
+  "uniforms": [
+    {
+      "name": "uProjectionMatrix",
+      "type": "matrix4",
+      "hasData": true,
+      "data": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    },
+    {
+      "name": "uModelViewMatrix",
+      "type": "matrix4",
+      "hasData": true,
+      "data": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    },
+    {
+      "name": "uColor",
+      "type": "float4",
+      "hasData": true,
+      "data": [1.0, 1.0, 1.0, 1.0]
+    }
+  ]
+}

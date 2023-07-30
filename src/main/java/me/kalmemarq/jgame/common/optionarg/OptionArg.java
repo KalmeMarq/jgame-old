@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.common;
+package me.kalmemarq.jgame.common.optionarg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;

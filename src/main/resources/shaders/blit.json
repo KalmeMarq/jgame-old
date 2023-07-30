@@ -1,0 +1,20 @@
+{
+  "vertex": "blit",
+  "fragment": "blit",
+  "attributes": [
+    {
+      "name": "aPosition",
+      "type": "float3"
+    },
+    {
+      "name": "aTexCoord",
+      "type": "float2"
+    }
+  ],
+  "samplers": [
+    {
+      "name": "uSampler0"
+    }
+  ],
+  "uniforms": []
+}

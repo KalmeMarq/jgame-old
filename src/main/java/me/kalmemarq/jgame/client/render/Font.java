@@ -1,11 +1,11 @@
-package me.kalmemarq.jgame.client;
+package me.kalmemarq.jgame.client.render;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
-import me.kalmemarq.jgame.client.resource.SyncResourceReloader;
+import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Util;
 
 import java.util.ArrayList;
@@ -16,14 +16,24 @@ import java.util.Map;
 public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> {
     private Map<Integer, Glyph> glyphMap = new HashMap<>();
 
-    public void drawText(String text, int x, int y, int color) {
-        if (text == null) return;
+    public void drawString(String text, int x, int y, int colour) {
+        if (text == null || text.length() == 0) return;
         char[] chrs = text.toCharArray();
         int xx = x;
+        Renderer.setCurrentShader(ShaderManager::getPositionTextureColorShader);
+        Renderer.setShaderTexture(0, "font.png");
+        Renderer.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Renderer.color((color >> 16 & 0xFF) / 255.0f, (color >> 8 & 0xFF) / 255.0f, (color & 0xFF) / 255.0f, (color >> 24 & 0xFF) / 255.0f);
+        int r = (colour >> 16) & 0xFF;
+        int g = (colour >> 8) & 0xFF;
+        int b = colour & 0xFF;
+        int a = (colour >> 24) & 0xFF;
+        
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder builder = tessellator.getBufferBuilder();
+        
+        builder.begin(VertexFormat.POSITION_TEXTURE_COLOR);
 
-        Renderer.begin(Renderer.PrimitiveType.QUADS);
         for (int i = 0; i < chrs.length; ++i) {
             if (chrs[i] == ' ') {
                 xx += 8;
@@ -32,20 +42,15 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
 
             Glyph glyph = this.glyphMap.get((int) chrs[i]);
             if (glyph != null) {
-                Renderer.texCoord(glyph.u0, glyph.v0);
-                Renderer.vertex(xx, y, 0);
-                Renderer.texCoord(glyph.u0, glyph.v1);
-                Renderer.vertex(xx, y + 8, 0);
-                Renderer.texCoord(glyph.u1, glyph.v1);
-                Renderer.vertex(xx + 8, y + 8, 0);
-                Renderer.texCoord(glyph.u1, glyph.v0);
-                Renderer.vertex(xx + 8, y, 0);
+                builder.vertex(xx, y, 0).texture(glyph.u0, glyph.v0).colour(r, g, b, a).next();
+                builder.vertex(xx, y + 8, 0).texture(glyph.u0, glyph.v1).colour(r, g, b, a).next();
+                builder.vertex(xx + 8, y + 8, 0).texture(glyph.u1, glyph.v1).colour(r, g, b, a).next();
+                builder.vertex(xx + 8, y, 0).texture(glyph.u1, glyph.v0).colour(r, g, b, a).next();
                 xx += glyph.advance;
             }
         }
-        Renderer.end();
-
-        Renderer.color(1.0f, 1.0f, 1.0f, 1.0f);
+        
+        tessellator.draw();
     }
 
     public List<String> breakTextIntoLines(String text, int maxwidth) {
@@ -78,12 +83,12 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
     }
 
     @Override
-    protected Map<Integer, Glyph> prepare() {
+    protected Map<Integer, Glyph> prepare(ResourceManager resourceManager) {
         ObjectMapper mapper = new ObjectMapper();
         Map<Integer, Glyph> map = new HashMap<>();
 
         try {
-            JsonNode fontObj = mapper.readTree(Util.readString(Client.class.getResourceAsStream("/font.json")));
+            JsonNode fontObj = mapper.readTree(Util.readString(resourceManager.getResource("font.json").getAsInputStream()));
             int advance = fontObj.has("advance") ? fontObj.get("advance").intValue() : 8;
 
             if (fontObj.isObject()) {
@@ -107,7 +112,7 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
     }
 
     @Override
-    protected void apply(Map<Integer, Glyph> prepared) {
+    protected void apply(Map<Integer, Glyph> prepared, ResourceManager resourceManager) {
         this.glyphMap = prepared;
     }
 

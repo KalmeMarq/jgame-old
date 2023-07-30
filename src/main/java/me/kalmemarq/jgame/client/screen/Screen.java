@@ -1,6 +1,7 @@
 package me.kalmemarq.jgame.client.screen;
 
 import me.kalmemarq.jgame.client.Client;
+import me.kalmemarq.jgame.client.render.DrawContext;
 
 public class Screen {
     protected Client client;
@@ -23,7 +24,7 @@ public class Screen {
     public void onClose() {
     }
 
-    public void render() {
+    public void render(DrawContext context) {
     }
 
     public void tick() {

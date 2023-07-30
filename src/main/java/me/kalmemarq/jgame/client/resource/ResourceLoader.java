@@ -2,7 +2,6 @@ package me.kalmemarq.jgame.client.resource;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +17,7 @@ public class ResourceLoader {
         this.total = 0;
     }
 
-    public void start(List<ResourceReloader> reloaders, Executor prepareExecutor, Executor applyExecutor, Runnable onComplete) {
+    public void start(List<ResourceReloader> reloaders, Executor prepareExecutor, Executor applyExecutor, ResourceManager resourceManager, Runnable onComplete) {
         this.prepared.set(0);
         this.applied.set(0);
         this.total = reloaders.size();
@@ -29,23 +28,30 @@ public class ResourceLoader {
         for (int i = 0; i < this.total; i++) {
             futures[i] = reloaders.get(i).reload(new PreparationSyncer() {
                 @Override
-                public <T> CompletableFuture<T> onComplete(T v) {
-                    prepared.incrementAndGet();
+                public <T> CompletableFuture<T> onPreparationComplete(T v) {
+                    ResourceLoader.this.prepared.incrementAndGet();
                     return CompletableFuture.supplyAsync(() -> v);
                 }
-            }, prepareExecutor, applyExecutor).whenComplete((_v0, _v1) -> {
+            }, prepareExecutor, applyExecutor, resourceManager).whenComplete((_v0, _v1) -> {
                 this.applied.incrementAndGet();
             });
         }
 
         CompletableFuture.allOf(futures).whenComplete((_v0, _v1) -> {
-            this.isActive = false;
-            onComplete.run();
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                this.isActive = false;
+                onComplete.run();
+            });
         });
     }
 
     public float getProgress() {
-        return (float)(this.prepared.get() + this.applied.get()) / (float)(this.total * 2f);
+        return (float)(this.prepared.get() + this.applied.get()) / (this.total * 2f);
     }
 
     public boolean isActive() {
@@ -53,6 +59,6 @@ public class ResourceLoader {
     }
 
     public interface PreparationSyncer {
-        <T> CompletableFuture<T> onComplete(T v);
+        <T> CompletableFuture<T> onPreparationComplete(T v);
     }
 }

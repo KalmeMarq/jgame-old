@@ -2,12 +2,14 @@ package me.kalmemarq.jgame.client.network;
 
 import me.kalmemarq.jgame.client.Client;
 import me.kalmemarq.jgame.client.screen.DisconnectedScreen;
+import me.kalmemarq.jgame.client.sound.SoundInstance;
 import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.Packet;
 import me.kalmemarq.jgame.common.network.packet.PingPacket;
+import me.kalmemarq.jgame.common.network.packet.PlaySoundS2CPacket;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,12 @@ public class ClientNetworkHandler implements Packet.PacketListener {
     @Override
     public void onPingPacket(PingPacket packet) {
         this.client.messages.add(("Your ping is " + (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - packet.getNanoTime())) + " ms").toUpperCase(Locale.ROOT));
+    }
+
+    @Override
+    public void onPlaySoundPacket(PlaySoundS2CPacket packet) {
+        System.out.println("bruh s: " + packet.getPath());
+        this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0, 0, 0, false));
     }
 
     @Override

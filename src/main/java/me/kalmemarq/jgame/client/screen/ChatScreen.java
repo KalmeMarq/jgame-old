@@ -1,6 +1,7 @@
 package me.kalmemarq.jgame.client.screen;
 
-import me.kalmemarq.jgame.client.Renderer;
+import me.kalmemarq.jgame.client.render.DrawContext;
+import me.kalmemarq.jgame.client.render.Renderer;
 import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.PingPacket;
@@ -14,29 +15,21 @@ public class ChatScreen extends Screen {
     private String input = "";
 
     @Override
-    public void render() {
+    public void render(DrawContext context) {
         int y = this.client.window.getScaledHeight() - 20 - 2;
         for (int i = this.client.messages.size() - 1; i >= 0; --i) {
             List<String> l = this.client.font.breakTextIntoLines(this.client.messages.get(i), this.client.window.getScaledWidth() - 10);
 
             for (int j = l.size() - 1; j >= 0; --j) {
-                this.client.font.drawText(l.get(j), 1, y, 0xFFEEEEEE);
+                context.drawString(l.get(j), 1, y, 0xFFEEEEEE);
 
                 y -= 10;
             }
         }
 
-        Renderer.disableTexture();
-        Renderer.begin(Renderer.PrimitiveType.QUADS);
-        Renderer.color(1.0f, 1.0f, 1.0f, 1.0f);
-        Renderer.vertex(0, this.client.window.getScaledHeight() - 13, 0);
-        Renderer.vertex(0, this.client.window.getScaledHeight() - 12, 0);
-        Renderer.vertex(this.client.window.getScaledWidth(), this.client.window.getScaledHeight() - 12, 0);
-        Renderer.vertex(this.client.window.getScaledWidth(), this.client.window.getScaledHeight() - 13, 0);
-        Renderer.end();
-        Renderer.enableTexture();
-
-        this.client.font.drawText(">" + this.input, 1, this.client.window.getScaledHeight() - 10, 0xFF_FFFFFF);
+        context.drawColoured(0, this.height - 13, 0, this.width, 1, 0xFF_FFFFFF);
+        
+        context.drawString(">" + this.input, 1, this.client.window.getScaledHeight() - 10, 0xFF_FFFFFF);
     }
 
     @Override

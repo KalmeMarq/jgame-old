@@ -1,5 +1,7 @@
 package me.kalmemarq.jgame.client.screen;
 
+import me.kalmemarq.jgame.client.render.DrawContext;
+
 public class ConnectingScreen extends Screen {
     public ConnectingScreen() {
     }
@@ -22,7 +24,7 @@ public class ConnectingScreen extends Screen {
     }
 
     @Override
-    public void render() {
-        this.client.font.drawText("CONNECTING...", this.client.window.getScaledWidth() / 2 - this.client.font.textWidth("CONNECTING...") / 2, this.client.window.getScaledHeight() / 2 - 4, 0xFF_FFFFFF);
+    public void render(DrawContext context) {
+        context.drawString("CONNECTING...", this.client.window.getScaledWidth() / 2 - this.client.font.textWidth("CONNECTING...") / 2, this.client.window.getScaledHeight() / 2 - 4, 0xFF_FFFFFF);
     }
 }

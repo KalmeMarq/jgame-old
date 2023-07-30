@@ -1,5 +1,7 @@
 package me.kalmemarq.jgame.client.screen;
 
+import me.kalmemarq.jgame.client.render.DrawContext;
+import me.kalmemarq.jgame.client.sound.SoundInstance;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
@@ -16,12 +18,12 @@ public class ConnectScreen extends Screen {
     }
 
     @Override
-    public void render() {
-        this.client.font.drawText("IP: " + this.ip, 10, 10, this.selectedIdx == 0 ? 0xFF_FFFFFF : 0xFF_999999);
-        this.client.font.drawText("USERNAME: " + this.username, 10, 20, this.selectedIdx == 1 ? 0xFF_FFFFFF : 0xFF_999999);
+    public void render(DrawContext context) {
+        context.drawString("IP: " + this.ip, 10, 10, this.selectedIdx == 0 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("USERNAME: " + this.username, 10, 20, this.selectedIdx == 1 ? 0xFF_FFFFFF : 0xFF_999999);
 
-        this.client.font.drawText("CONNECT", 10, 40, this.selectedIdx == 2 ? 0xFF_FFFFFF : 0xFF_999999);
-        this.client.font.drawText("QUIT", 10, 50, this.selectedIdx == 3 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("CONNECT", 10, 40, this.selectedIdx == 2 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("QUIT", 10, 50, this.selectedIdx == 3 ? 0xFF_FFFFFF : 0xFF_999999);
     }
 
     @Override
@@ -29,11 +31,13 @@ public class ConnectScreen extends Screen {
         if (key == GLFW.GLFW_KEY_UP) {
             --this.selectedIdx;
             if (this.selectedIdx < 0) this.selectedIdx = 3;
+            this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_DOWN) {
             ++this.selectedIdx;
             if (this.selectedIdx >= 4) this.selectedIdx = 0;
+            this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_SPACE) {

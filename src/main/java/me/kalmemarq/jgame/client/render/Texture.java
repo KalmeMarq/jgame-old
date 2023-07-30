@@ -1,5 +1,6 @@
-package me.kalmemarq.jgame.client;
+package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;
 import org.lwjgl.opengl.GL11;
 
@@ -31,11 +32,11 @@ public class Texture implements Destroyable {
         return this.height;
     }
 
-    public void load() {
+    public void load(ResourceManager resourceManager) {
         this.bind();
 
         try {
-            BufferedImage image = ImageIO.read(Objects.requireNonNull(Texture.class.getResourceAsStream(this.path)));
+            BufferedImage image = ImageIO.read(resourceManager.getResource(this.path).getAsInputStream());
 
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
             GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);

@@ -7,9 +7,9 @@ import java.util.concurrent.Executor;
 
 public abstract class SyncResourceReloader implements ResourceReloader {
     @Override
-    public CompletableFuture<Void> reload(ResourceLoader.PreparationSyncer preparationSyncer, Executor prepareExecutor, Executor applyExecutor) {
-        return CompletableFuture.supplyAsync(() -> Unit.UNIT, prepareExecutor).thenComposeAsync(preparationSyncer::onComplete).thenAcceptAsync((u) -> this.reload(), applyExecutor);
+    public CompletableFuture<Void> reload(ResourceLoader.PreparationSyncer preparationSyncer, Executor prepareExecutor, Executor applyExecutor, ResourceManager resourceManager) {
+        return preparationSyncer.onPreparationComplete(Unit.INSTANCE).thenRunAsync(() -> this.reload(resourceManager), applyExecutor);
     }
 
-    protected abstract void reload();
+    protected abstract void reload(ResourceManager resourceManager);
 }

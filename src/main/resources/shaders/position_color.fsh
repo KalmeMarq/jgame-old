@@ -1,6 +1,6 @@
 #version 330
 
-uniform mat4 uColor;
+uniform vec4 uColor;
 
 in vec4 vColor;
 

@@ -1,7 +1,11 @@
 package me.kalmemarq.jgame.server;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -15,6 +19,7 @@ import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.Packet;
 import me.kalmemarq.jgame.common.network.packet.PingPacket;
+import me.kalmemarq.jgame.common.network.packet.PlaySoundS2CPacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -38,6 +43,10 @@ public class Server implements Destroyable {
         return LiteralArgumentBuilder.literal(name);
     }
 
+    static <T> RequiredArgumentBuilder<ServerCommandSource, T> required(String name, ArgumentType<T> argumentType) {
+        return RequiredArgumentBuilder.argument(name, argumentType);
+    }
+
     public Server(Thread serverThread, MessageListener listener) throws InterruptedException {
         this.serverThread = serverThread;
         this.listener = listener;
@@ -47,6 +56,16 @@ public class Server implements Destroyable {
             c.getSource().connection.sendPacket(new MessagePacket("Server", Instant.now(), "Player Count: " + this.connections.size()));
             return 0;
         }));
+
+        this.dispatcher.register(
+            literal("PLAYSOUND")
+               .executes(ctx -> {
+
+                   ctx.getSource().connection.sendPacket(new PlaySoundS2CPacket("select.ogg", 1.0f, 1.0f));
+
+                   return 0;
+               })
+        );
 
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(Util.SERVER_EVENT_GROUP.get())
@@ -76,6 +95,11 @@ public class Server implements Destroyable {
                                 } catch (CommandSyntaxException e) {
                                     connection.sendPacket(new MessagePacket("Server", Instant.now(), e.getMessage().toUpperCase(Locale.ROOT)));
                                 }
+                            }
+
+                            @Override
+                            public void onPlaySoundPacket(PlaySoundS2CPacket packet) {
+                                connection.sendPacket(packet);
                             }
 
                             @Override

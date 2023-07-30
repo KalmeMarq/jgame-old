@@ -30,10 +30,11 @@ public class Window implements Destroyable {
     private WindowEventHandler windowEventHandler;
     private boolean focused;
 
-    public Window(int width, int height, String title) {
+    public Window(int width, int height, String title, boolean vsync) {
         this.title = title;
         this.width = Math.max(width, 1);
         this.height = Math.max(height, 1);
+        this.vsync = vsync;
     }
 
     public void init(WindowEventHandler windowHandler, MouseEventHandler mouseHandler, KeyboardEventHandler keyboardHandler) throws RuntimeException {
@@ -46,9 +47,9 @@ public class Window implements Destroyable {
         GLFW.glfwDefaultWindowHints();
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
-//        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-//        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
-//        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
+        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 
         this.handle = GLFW.glfwCreateWindow(this.width, this.height, this.title, 0L, 0L);
 
@@ -68,7 +69,7 @@ public class Window implements Destroyable {
         }
 
         GLFW.glfwMakeContextCurrent(this.handle);
-        GLFW.glfwSwapInterval(1);
+        GLFW.glfwSwapInterval(this.vsync ? 1 : 0);
         GLFW.glfwShowWindow(this.handle);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {

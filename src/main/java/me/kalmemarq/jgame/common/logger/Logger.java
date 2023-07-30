@@ -13,6 +13,11 @@ public class Logger {
     private static final DateFormat DATE_FORMATTER = new SimpleDateFormat("HH:mm:ss:SSS");
     private static final PrintStream PRINT_STREAM = new PrintStream(System.out);
     private static final Date DATE = new Date();
+    private static LogLevel logLevel = LogLevel.FATAL;
+
+    public static void setLogLevel(LogLevel logLevel) {
+        Logger.logLevel = logLevel;
+    }
 
     private final String name;
 
@@ -74,8 +79,9 @@ public class Logger {
     }
 
     public void info(String message) {
+        if (logLevel.id < LogLevel.INFO.id) return;
         DATE.setTime(System.currentTimeMillis());
-        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/" + "Info] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
+        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/" + LogLevel.INFO.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
     }
 
@@ -88,8 +94,9 @@ public class Logger {
     }
 
     public void warn(String message) {
+        if (logLevel.id < LogLevel.WARN.id) return;
         DATE.setTime(System.currentTimeMillis());
-        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.YELLOW + "[" + Thread.currentThread().getName() + "/" + "Warn] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
+        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.YELLOW + "[" + Thread.currentThread().getName() + "/" + LogLevel.WARN.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
     }
 
@@ -102,8 +109,9 @@ public class Logger {
     }
 
     public void error(String message) {
+        if (logLevel.id < LogLevel.ERROR.id) return;
         DATE.setTime(System.currentTimeMillis());
-        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/" + "Error] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
+        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/" + LogLevel.ERROR.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
         PRINT_STREAM.print(out);
     }
 
@@ -116,8 +124,9 @@ public class Logger {
     }
 
     public void fatal(String message) {
+        if (logLevel.id < LogLevel.FATAL.id) return;
         DATE.setTime(System.currentTimeMillis());
-        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/Fatal] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
+        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/" + LogLevel.FATAL.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
         PRINT_STREAM.print(out);
     }
 
@@ -130,13 +139,31 @@ public class Logger {
     }
 
     public void debug(String message) {
+        if (logLevel.id < LogLevel.DEBUG.id) return;
         DATE.setTime(System.currentTimeMillis());
-        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/Debug] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
+        String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/" + LogLevel.DEBUG.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
     }
 
     public void debug(String message, Object... args) {
         this.debug(this.formatMessage(message, args));
+    }
+    
+    public enum LogLevel {
+        NONE(0, ""),
+        INFO(1, "Info"),
+        WARN(2, "Warn"),
+        ERROR(3, "Error"),
+        FATAL(4, "Fatal"),
+        DEBUG(5, "Debug");
+        
+        private final int id;
+        private final String name;
+        
+        LogLevel(final int id, final String name) {
+            this.id = id;
+            this.name = name;
+        }
     }
 
     private static class Ansi {

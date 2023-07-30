@@ -3,6 +3,7 @@ package me.kalmemarq.jgame.server;
 import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
+import me.kalmemarq.jgame.common.network.packet.PlaySoundS2CPacket;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -17,8 +18,6 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        List<NetworkConnection> connections = new ArrayList<>();
-
         try {
             JFrame frame = new JFrame("JGame Server");
             frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -74,6 +73,10 @@ public class Main {
                             } else if (line.startsWith("/msg ")) {
                                 for (NetworkConnection connection : server.connections) {
                                     connection.sendPacket(new MessagePacket("Server", Instant.now(), line.substring(4)));
+                                }
+                            } else if (line.startsWith("/playsound")) {
+                                for (NetworkConnection connection : server.connections) {
+                                    connection.sendPacket(new PlaySoundS2CPacket("select.ogg", 1.0f, 1.0f));
                                 }
                             } else if (line.startsWith("/playercount")) {
                                 chatArea.append("Player Count: " + server.connections.size() + "\n");

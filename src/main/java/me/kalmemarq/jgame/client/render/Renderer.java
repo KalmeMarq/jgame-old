@@ -1,12 +1,40 @@
-package me.kalmemarq.jgame.client;
+package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.client.Client;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
+import java.util.function.Supplier;
+
 public class Renderer {
     private static Matrix4f PROJECTION_MATRIX = new Matrix4f().identity();
     private static Matrix4f MODE_VIEW_MATRIX = new Matrix4f().identity();
+    private static final float[] SHADER_COLOR = { 1.0f, 1.0f, 1.0f, 1.0f };
+    private static Shader CURRENT_SHADER = null;
+    private static final int[] SHADER_TEXTURES = new int[12];
+
+    public static void setShaderTexture(int slot, int textureId) {
+        SHADER_TEXTURES[slot] = textureId;
+    }
+    
+    public static void setShaderTexture(int slot, String name) {
+        Client client = Client.getInstance();
+        Texture txr = client.textureManager.getTexture(name);
+        SHADER_TEXTURES[slot] = txr.getId();
+    }
+
+    public static int getShaderTexture(int slot) {
+        return SHADER_TEXTURES[slot];
+    }
+
+    public static void setCurrentShader(Supplier<Shader> currentShader) {
+        CURRENT_SHADER = currentShader.get();
+    }
+
+    public static Shader getCurrentShader() {
+        return CURRENT_SHADER;
+    }
 
     public static void setProjectionMatrix(Matrix4f matrix) {
         PROJECTION_MATRIX = matrix;
@@ -22,6 +50,17 @@ public class Renderer {
 
     public static Matrix4f getModeViewMatrix() {
         return MODE_VIEW_MATRIX;
+    }
+    
+    public static void setShaderColor(float red, float green, float blue, float alpha) {
+        SHADER_COLOR[0] = red;
+        SHADER_COLOR[1] = green;
+        SHADER_COLOR[2] = blue;
+        SHADER_COLOR[3] = alpha;
+    }
+
+    public static float[] getShaderColor() {
+        return SHADER_COLOR;
     }
 
     private static boolean textured2DCap = false;
@@ -68,51 +107,6 @@ public class Renderer {
 
     public static void blendSeparateFunc(BlendFactor srcRGBFactor, BlendFactor dstRGBFactor, BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor) {
         GL15.glBlendFuncSeparate(srcRGBFactor.glType, dstRGBFactor.glType, srcAlphaFactor.glType, dstAlphaFactor.glType);
-    }
-
-    @Deprecated
-    public static void matrixMode(MatrixMode mode) {
-        GL11.glMatrixMode(mode.glType);
-    }
-
-    @Deprecated
-    public static void loadIdentity() {
-        GL11.glLoadIdentity();
-    }
-
-    @Deprecated
-    public static void ortho(double left, double right, double bottom, double top, double zNear, double zFar) {
-        GL11.glOrtho(left, right, bottom, top, zNear, zFar);
-    }
-
-    @Deprecated
-    public static void translate(float x, float y, float z) {
-        GL11.glTranslatef(x, y, z);
-    }
-
-    @Deprecated
-    public static void color(float red, float green, float blue, float alpha) {
-        GL11.glColor4f(red, green, blue, alpha);
-    }
-
-    @Deprecated
-    public static void begin(PrimitiveType primitive) {
-        GL11.glBegin(primitive.glType);
-    }
-
-    @Deprecated
-    public static void vertex(float x, float y, float z) {
-        GL11.glVertex3f(x, y, z);
-    }
-
-    @Deprecated
-    public static void texCoord(float u, float v) {
-        GL11.glTexCoord2f(u, v);
-    }
-
-    @Deprecated
-    public static void end() {
-        GL11.glEnd();
     }
 
     public enum BlendFactor {

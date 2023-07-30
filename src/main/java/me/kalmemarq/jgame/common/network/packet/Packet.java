@@ -7,7 +7,8 @@ public abstract class Packet {
             MessagePacket.class,
             DisconnectPacket.class,
             PingPacket.class,
-            CommandC2SPacket.class
+            CommandC2SPacket.class,
+            PlaySoundS2CPacket.class
     );
 
     abstract public void write(PacketByteBuf buffer);
@@ -19,6 +20,7 @@ public abstract class Packet {
         void onMessagePacket(MessagePacket packet);
         void onDisconnectPacket(DisconnectPacket packet);
         void onPingPacket(PingPacket packet);
+        void onPlaySoundPacket(PlaySoundS2CPacket packet);
         void onCommandC2SPacket(CommandC2SPacket packet);
         void onDisconnected();
     }
