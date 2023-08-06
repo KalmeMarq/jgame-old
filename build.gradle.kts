@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "me.kalmemarq"
@@ -21,13 +22,6 @@ repositories {
 }
 
 dependencies {
-    implementation("io.netty:netty-buffer:$nettyVersion")
-    implementation("io.netty:netty-codec:$nettyVersion")
-    implementation("io.netty:netty-common:$nettyVersion")
-    implementation("io.netty:netty-handler:$nettyVersion")
-    implementation("io.netty:netty-resolver:$nettyVersion")
-    implementation("io.netty:netty-transport:$nettyVersion")
-
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     implementation("org.lwjgl", "lwjgl")
     implementation("org.lwjgl", "lwjgl-glfw")
@@ -41,12 +35,18 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-openal", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-stb", classifier = lwjglNatives)
+    
+    implementation("io.netty:netty-buffer:$nettyVersion")
+    implementation("io.netty:netty-codec:$nettyVersion")
+    implementation("io.netty:netty-common:$nettyVersion")
+    implementation("io.netty:netty-handler:$nettyVersion")
+    implementation("io.netty:netty-resolver:$nettyVersion")
+    implementation("io.netty:netty-transport:$nettyVersion")
     implementation("org.joml", "joml", jomlVersion)
 
     implementation("com.mojang:brigadier:$brigadierVersion")
 
     implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-
     compileOnly("org.jetbrains:annotations:$jbAnnotationsVersion")
 }

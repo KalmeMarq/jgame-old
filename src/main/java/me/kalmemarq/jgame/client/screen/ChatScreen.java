@@ -1,7 +1,6 @@
 package me.kalmemarq.jgame.client.screen;
 
 import me.kalmemarq.jgame.client.render.DrawContext;
-import me.kalmemarq.jgame.client.render.Renderer;
 import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.PingPacket;

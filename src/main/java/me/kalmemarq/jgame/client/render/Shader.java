@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.JacksonHelper;
 import me.kalmemarq.jgame.common.logger.Logger;
 import org.lwjgl.opengl.GL20;
 
@@ -108,12 +108,12 @@ public class Shader implements Destroyable {
                                 }
                                 case INT2, INT3, INT4 -> {
                                     if (jData instanceof ArrayNode jDataArr) {
-                                        uniform.set(Util.arrayNodeToIntArray(jDataArr));
+                                        uniform.set(JacksonHelper.arrayNodeToIntArray(jDataArr));
                                     }
                                 }
                                 default -> {
                                     if (jData instanceof ArrayNode jDataArr) {
-                                        uniform.set(Util.arrayNodeToFloatArray(jDataArr));
+                                        uniform.set(JacksonHelper.arrayNodeToFloatArray(jDataArr));
                                     }
                                 }
                             }

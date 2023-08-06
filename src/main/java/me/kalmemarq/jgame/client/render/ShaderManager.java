@@ -6,7 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.JacksonHelper;
+import me.kalmemarq.jgame.common.StringHelper;
 import me.kalmemarq.jgame.common.logger.Logger;
 
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
         Map<String, String> cachedIncludes = new HashMap<>();
 
         try {
-            ObjectNode dataPC = (ObjectNode) Util.OBJECT_MAPPER.readTree(Util.readString(resourceManager.getResource("shaders/blit.json").getAsInputStream()));
+            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/blit.json").getAsInputStream()));
             dataPC.put("vertex", readSource(cachedIncludes, dataPC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPC.put("fragment", readSource(cachedIncludes, dataPC.get("fragment").textValue() + ".fsh", resourceManager));
             shaders.put("blit", dataPC);
@@ -45,7 +46,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
         }
 
         try {
-            ObjectNode dataPC = (ObjectNode) Util.OBJECT_MAPPER.readTree(Util.readString(resourceManager.getResource("shaders/position_color.json").getAsInputStream()));
+            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/position_color.json").getAsInputStream()));
             dataPC.put("vertex", readSource(cachedIncludes, dataPC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPC.put("fragment", readSource(cachedIncludes, dataPC.get("fragment").textValue() + ".fsh", resourceManager));
             shaders.put("position_color", dataPC);
@@ -54,7 +55,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
         }
 
         try {
-            ObjectNode dataPTC = (ObjectNode) Util.OBJECT_MAPPER.readTree(Util.readString(resourceManager.getResource("shaders/position_texture_color.json").getAsInputStream()));
+            ObjectNode dataPTC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/position_texture_color.json").getAsInputStream()));
             dataPTC.put("vertex", readSource(cachedIncludes, dataPTC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPTC.put("fragment", readSource(cachedIncludes, dataPTC.get("fragment").textValue() + ".fsh", resourceManager));
             shaders.put("position_texture_color", dataPTC);
@@ -100,7 +101,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
     }
 
     private static String readSource(Map<String, String> cachedIncludes, String name, ResourceManager resourceManager) {
-        return readSource(cachedIncludes, "shaders/" + name, Util.readString(resourceManager.getResource("shaders/" + name).getAsInputStream()), new PreProcessorContext(), resourceManager);
+        return readSource(cachedIncludes, "shaders/" + name, StringHelper.readString(resourceManager.getResource("shaders/" + name).getAsInputStream()), new PreProcessorContext(), resourceManager);
     }
 
     private static String readSource(Map<String, String> cachedIncludes, String sourcePath, String source, PreProcessorContext context, ResourceManager resourceManager) {
@@ -130,7 +131,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
                     continue;
                 }
 
-                String includSource = readSource(cachedIncludes, path, Util.readString(resourceManager.getResource("shaders/include/" + path).getAsInputStream()), context, resourceManager);
+                String includSource = readSource(cachedIncludes, path, StringHelper.readString(resourceManager.getResource("shaders/include/" + path).getAsInputStream()), context, resourceManager);
                 sb.append(includSource);
                 cachedIncludes.put(path, includSource);
             }

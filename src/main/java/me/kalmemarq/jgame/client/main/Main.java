@@ -1,5 +1,6 @@
-package me.kalmemarq.jgame.client;
+package me.kalmemarq.jgame.client.main;
 
+import me.kalmemarq.jgame.client.Client;
 import me.kalmemarq.jgame.common.optionarg.OptionArg;
 import me.kalmemarq.jgame.common.optionarg.OptionArgParser;
 import me.kalmemarq.jgame.common.logger.Logger;
@@ -20,7 +21,7 @@ public class Main {
         if (!gameDir.exists() && !gameDir.mkdirs()) {
             throw new RuntimeException("Could not create game directory! " + gameDir.getAbsolutePath());
         }
-        
+
         if (debugLWJGLArg.value()) {
             Configuration.DEBUG.set(true);
             Configuration.DEBUG_MEMORY_ALLOCATOR.set(true);
@@ -28,7 +29,7 @@ public class Main {
             Logger.setLogLevel(Logger.LogLevel.DEBUG);
         }
 
-        Client client = new Client(gameDirArg.value());
+        Client client = new Client(gameDir.toPath());
         System.setOut(new LoggerPrintStream("SystemOut", System.out, false, debugLWJGLArg.value()));
         System.setErr(new LoggerPrintStream("SystemError", System.err, true, debugLWJGLArg.value()));
         client.run();

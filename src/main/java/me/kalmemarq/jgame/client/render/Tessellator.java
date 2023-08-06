@@ -4,7 +4,7 @@ public class Tessellator {
     private static final Tessellator INSTANCE = new Tessellator(0x20000);
 
     public static Tessellator getInstance() {
-        return INSTANCE;
+        return Tessellator.INSTANCE;
     }
 
     private final BufferBuilder bufferBuilder;

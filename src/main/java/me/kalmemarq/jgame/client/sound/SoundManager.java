@@ -2,7 +2,7 @@ package me.kalmemarq.jgame.client.sound;
 
 import me.kalmemarq.jgame.client.Client;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.MathHelper;
 import me.kalmemarq.jgame.common.logger.Logger;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
@@ -84,13 +84,13 @@ public class SoundManager implements Destroyable {
         if (!this.initialized) return;
         if (!Client.getInstance().options.sound.getValue()) return;
 
-        float volume = Util.clamp(instance.getVolume(), 0.0f, 1.0f);
+        float volume = MathHelper.clamp(instance.getVolume(), 0.0f, 1.0f);
 
         if (volume == 0.0f) {
             return;
         }
 
-        float pitch = Util.clamp(instance.getVolume(), 0.5f, 2.0f);
+        float pitch = MathHelper.clamp(instance.getVolume(), 0.5f, 2.0f);
 
         SoundSource source = new SoundSource();
         source.setVolume(volume);

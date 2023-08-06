@@ -37,11 +37,11 @@ public class Identifier implements Comparable<Identifier> {
     }
 
     public static Identifier of(String namespace, String path) {
-        if (!Util.isValidString(namespace, Identifier::isNamespaceAllowedChar)) {
+        if (!StringHelper.isValidString(namespace, Identifier::isNamespaceAllowedChar)) {
             throw new InvalidIdentifierException("'" + namespace +"' is an invalid namespace. It should only contain [a-z0-9_] characters.");
         }
 
-        if (!Util.isValidString(path, Identifier::isPathAllowedChar)) {
+        if (!StringHelper.isValidString(path, Identifier::isPathAllowedChar)) {
             throw new InvalidIdentifierException("'" + path +"' is an invalid path. It should only contain [a-z0-9_/] characters.");
         }
         

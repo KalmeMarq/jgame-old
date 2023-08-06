@@ -6,8 +6,17 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import me.kalmemarq.jgame.client.network.ClientNetworkHandler;
-import me.kalmemarq.jgame.client.render.*;
+import me.kalmemarq.jgame.common.Destroyable;
+import me.kalmemarq.jgame.common.MemoryUnit;
+import me.kalmemarq.jgame.common.ThreadExecutor;
+import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.network.ClientNetworkHandler;
+import me.kalmemarq.jgame.client.render.DrawContext;
+import me.kalmemarq.jgame.client.render.Font;
+import me.kalmemarq.jgame.client.render.Framebuffer;
+import me.kalmemarq.jgame.client.render.Renderer;
+import me.kalmemarq.jgame.client.render.ShaderManager;
+import me.kalmemarq.jgame.client.render.TextureManager;
 import me.kalmemarq.jgame.client.resource.ResourceLoader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.client.screen.ChatScreen;
@@ -15,10 +24,9 @@ import me.kalmemarq.jgame.client.screen.ConnectScreen;
 import me.kalmemarq.jgame.client.screen.DisconnectedScreen;
 import me.kalmemarq.jgame.client.screen.Screen;
 import me.kalmemarq.jgame.client.sound.SoundManager;
-import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.ThreadExecutor;
+import me.kalmemarq.jgame.common.logger.Logger;
 import me.kalmemarq.jgame.common.network.NetworkConnection;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.network.packet.HandshakeC2SPacket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -26,12 +34,20 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class Client extends ThreadExecutor implements Destroyable, Window.WindowEventHandler, Window.MouseEventHandler, Window.KeyboardEventHandler {
     private static Client INSTANCE;
+    private static final Logger LOGGER = Logger.getLogger();
     
     private final Thread clientThread;
     public final Window window;
@@ -47,9 +63,13 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     private final ShaderManager shaderManager;
     private final Framebuffer framebuffer;
     private final ResourceManager resourceManager = new ResourceManager();
+    private final Path gameDir;
+    AllocationRateCalculator allocationRateCalculator;
 
-    public Client(File gameDir) {
+    public Client(Path gameDir) {
         INSTANCE = this;
+        this.allocationRateCalculator = new AllocationRateCalculator();
+        this.gameDir = gameDir;
         this.clientThread = Thread.currentThread();
         this.options = new GameOptions(gameDir);
         this.options.load();
@@ -61,6 +81,18 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         this.shaderManager = new ShaderManager();
         this.framebuffer = new Framebuffer();
     }
+    
+    private void takeScreenshot() {
+        Path screenshotDir = Paths.get(this.gameDir.toString(), "screenshots");
+
+        try {
+            if (!Files.exists(screenshotDir)) {
+                Files.createDirectories(screenshotDir);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to create screenshots folder: {}", e);
+        }
+    }
 
     public void run() {
         this.window.init(this, this, this);
@@ -69,7 +101,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
 
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        this.resourceLoader.start(List.of(this.shaderManager, this.textureManager, this.font), Util.RELOADER_WORKER, this, this.resourceManager, () -> {
+        this.resourceLoader.start(List.of(this.shaderManager, this.textureManager, this.font), Util.RELOADER_WORKER.get(), this, this.resourceManager, () -> {
         });
         
         try {
@@ -133,6 +165,42 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     private void tick() {
         if (this.screen != null) this.screen.tick();
     }
+
+    static class AllocationRateCalculator {
+        private static final List<GarbageCollectorMXBean> GARBAGE_COLLECTORS = ManagementFactory.getGarbageCollectorMXBeans();
+        private long lastCalculated = 0L;
+        private long allocatedBytes = -1L;
+        private long collectionCount = -1L;
+        private long allocationRate = 0L;
+
+        AllocationRateCalculator() {
+        }
+
+        long get(long allocatedBytes) {
+            long m = System.currentTimeMillis();
+            if (m - this.lastCalculated < 500L) {
+                return this.allocationRate;
+            }
+            long n = AllocationRateCalculator.getCollectionCount();
+            if (this.lastCalculated != 0L && n == this.collectionCount) {
+                double d = (double) TimeUnit.SECONDS.toMillis(1L) / (double)(m - this.lastCalculated);
+                long o = allocatedBytes - this.allocatedBytes;
+                this.allocationRate = Math.round((double)o * d);
+            }
+            this.lastCalculated = m;
+            this.allocatedBytes = allocatedBytes;
+            this.collectionCount = n;
+            return this.allocationRate;
+        }
+
+        private static long getCollectionCount() {
+            long l = 0L;
+            for (GarbageCollectorMXBean garbageCollectorMXBean : GARBAGE_COLLECTORS) {
+                l += garbageCollectorMXBean.getCollectionCount();
+            }
+            return l;
+        }
+    }
     
     private void render() {
         Renderer.setProjectionMatrix(Renderer.getProjectionMatrix().identity().setOrtho(0, this.window.getFramebufferWidth() / 2f, this.window.getFramebufferHeight() / 2f, 0, 1000, 3000));
@@ -144,10 +212,28 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         if (this.resourceLoader.isActive()) {
             if (ShaderManager.hasLoadedInitial()) {
                 context.drawColoured(0, this.window.getScaledHeight() - 23, 0, (int) (this.window.getScaledWidth() * this.resourceLoader.getProgress()), 12, 0xFF_FFFFFF);
-                context.drawString("PROGRESS: " + (int)(this.resourceLoader.getProgress() * 100) + "%", 1, this.window.getScaledHeight() - 40, 0xFF_FFFFFF);
+                context.drawString("Progress: " + (int)(this.resourceLoader.getProgress() * 100) + "%", 1, this.window.getScaledHeight() - 40, 0xFF_FFFFFF);
             }
         } else {
             if (this.screen != null) this.screen.render(context);
+
+            long maxMem = Runtime.getRuntime().maxMemory();
+            long totalMem = Runtime.getRuntime().totalMemory();
+            long freeMem = Runtime.getRuntime().freeMemory();
+            long availMem = totalMem - freeMem;
+            
+            String[] texts = {
+                "Java: " + System.getProperty("java.version"),
+                String.format(Locale.ROOT, "Mem: % 2d%% %03d/%03dMB", availMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(availMem), (long) MemoryUnit.BYTES.toMiB(maxMem)),
+                String.format(Locale.ROOT, "Allocation rate: %03dMB /s", (long) MemoryUnit.BYTES.toMiB(this.allocationRateCalculator.get(availMem))),
+                String.format(Locale.ROOT, "Allocated: % 2d%% %03dMB", totalMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(totalMem))
+            };
+            int y = 1;
+            
+            for (int i = 0; i < texts.length; ++i) {
+                context.drawString(texts[i], this.window.getScaledWidth() - texts[i].length() * 8 - 1, y, 0xFF_FFFFFF);
+                y += 9;
+            }
         }
     }
 
@@ -186,6 +272,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
                     });
 
             bootstrap.connect("localhost", 8080).sync();
+            this.connection.sendPacket(new HandshakeC2SPacket(2));
             this.messages.add("Connected to localhost:8080!".toUpperCase(Locale.ROOT));
             this.setScreen(new ChatScreen());
         } catch (Exception e) {
@@ -202,7 +289,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     @Override
     public void destroy() {
         this.shaderManager.destroy();
-        Util.shutdownWorkers();
+        Util.shutdownExecutors();
         this.textureManager.destroy();
         this.window.destroy();
     }
@@ -234,6 +321,10 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
 
     @Override
     public void onKey(int key, int scancode, int action, int modifiers) {
+        if (action == GLFW.GLFW_PRESS && key == GLFW.GLFW_KEY_F2) {
+            this.takeScreenshot();
+        }
+        
         if (action != GLFW.GLFW_RELEASE) {
             this.screen.keyPressed(key);
         } else {

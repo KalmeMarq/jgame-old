@@ -1,9 +1,10 @@
-package me.kalmemarq.jgame.server;
+package me.kalmemarq.jgame.server.main;
 
 import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.PlaySoundS2CPacket;
+import me.kalmemarq.jgame.server.Server;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -12,9 +13,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {

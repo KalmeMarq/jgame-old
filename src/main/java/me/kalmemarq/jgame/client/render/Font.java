@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.StringHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,7 +88,7 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
         Map<Integer, Glyph> map = new HashMap<>();
 
         try {
-            JsonNode fontObj = mapper.readTree(Util.readString(resourceManager.getResource("font.json").getAsInputStream()));
+            JsonNode fontObj = mapper.readTree(StringHelper.readString(resourceManager.getResource("font.json").getAsInputStream()));
             int advance = fontObj.has("advance") ? fontObj.get("advance").intValue() : 8;
 
             if (fontObj.isObject()) {

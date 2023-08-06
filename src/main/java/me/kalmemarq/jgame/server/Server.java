@@ -2,8 +2,6 @@ package me.kalmemarq.jgame.server;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -12,10 +10,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
+import me.kalmemarq.jgame.common.network.packet.HandshakeC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.MessagePacket;
 import me.kalmemarq.jgame.common.network.packet.Packet;
 import me.kalmemarq.jgame.common.network.packet.PingPacket;
@@ -28,7 +27,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class Server implements Destroyable {
-    List<NetworkConnection> connections = new ArrayList<>();
+    private static final int PROTOCOL_VERSION = 100;
+    public List<NetworkConnection> connections = new ArrayList<>();
     Channel channel;
     private MessageListener listener;
 
@@ -75,7 +75,7 @@ public class Server implements Destroyable {
                     protected void initChannel(@NotNull Channel ch) throws Exception {
                         NetworkConnection connection = new NetworkConnection();
                         connections.add(connection);
-                        connection.setPacketListener(new Packet.PacketListener() {
+                        connection.setPacketListener(new Packet.ServerPacketListener() {
                             @Override
                             public void onMessagePacket(MessagePacket packet) {
                                 listener.onMessage("[" + packet.getCreatedTime().toString() + "] <" + packet.getUsername() + "> " + packet.getMessage() + "\n");
@@ -94,6 +94,17 @@ public class Server implements Destroyable {
                                     dispatcher.execute(packet.getCommand(), source);
                                 } catch (CommandSyntaxException e) {
                                     connection.sendPacket(new MessagePacket("Server", Instant.now(), e.getMessage().toUpperCase(Locale.ROOT)));
+                                }
+                            }
+
+                            @Override
+                            public void onHandshakeC2SPacket(HandshakeC2SPacket packet) {
+                                System.out.println(packet.getProtocolVersion());
+                                if (packet.getProtocolVersion() != PROTOCOL_VERSION) {
+                                    listener.onMessage("Client with wrong protocol version tried to connect!");
+                                    connection.sendPacket(new DisconnectPacket("INCOMPATIBLE PROTOCOL VERSION!"));
+                                    connection.disconnect();
+                                    Server.this.connections.remove(connection);
                                 }
                             }
 
@@ -119,7 +130,7 @@ public class Server implements Destroyable {
         this.channel = bootstrap.bind("localhost", 8080).sync().channel();
     }
 
-    interface MessageListener {
+    public interface MessageListener {
         void onMessage(String msg);
     }
 

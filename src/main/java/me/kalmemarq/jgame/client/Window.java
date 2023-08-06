@@ -1,6 +1,7 @@
 package me.kalmemarq.jgame.client;
 
 import me.kalmemarq.jgame.common.Destroyable;
+import me.kalmemarq.jgame.common.OperatingSystem;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
@@ -50,6 +51,9 @@ public class Window implements Destroyable {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+        if (OperatingSystem.get() == OperatingSystem.MACOS) {
+            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
+        }
 
         this.handle = GLFW.glfwCreateWindow(this.width, this.height, this.title, 0L, 0L);
 
