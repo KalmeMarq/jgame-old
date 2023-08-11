@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.client.render;
+package me.kalmemarq.jgame.client.render.texture;
 
 import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;

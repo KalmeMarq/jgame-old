@@ -1,13 +1,13 @@
 package me.kalmemarq.jgame.client.sound;
 
 public class SoundInstance {
-    private String path;
-    private float volume;
-    private float pitch;
-    private double x;
-    private double y;
-    private double z;
-    private boolean relative;
+    private final String path;
+    private final float volume;
+    private final float pitch;
+    private final double x;
+    private final double y;
+    private final double z;
+    private final boolean relative;
 
     public SoundInstance(String path, float volume, float pitch, double x, double y, double z, boolean relative) {
         this.path = path;

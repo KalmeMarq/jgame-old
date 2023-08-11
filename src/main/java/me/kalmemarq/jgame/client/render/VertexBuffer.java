@@ -1,10 +1,12 @@
 package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.client.render.shader.Shader;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.logger.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
@@ -35,7 +37,7 @@ public class VertexBuffer implements Destroyable {
     public void upload(BufferBuilder.BuiltBuffer builtBuffer) {
         this.format = builtBuffer.format();
         this.mode = builtBuffer.mode();
-
+        
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, this.vbo);
 
         if (builtBuffer.remaining() > this.lastVertexSize) {
@@ -46,7 +48,7 @@ public class VertexBuffer implements Destroyable {
             GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, builtBuffer.buffer());
         }
 
-        this.indexCount = this.mode.getIndexCount(builtBuffer.vertexCount());
+        this.indexCount = this.mode.getIndexCount(builtBuffer.indexCount());
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.ibo);
 
         if (this.indexCount > this.lastIndexSize || this.indexBuffer == null) {
@@ -58,9 +60,9 @@ public class VertexBuffer implements Destroyable {
             int indexTypeSize = this.indexType.byteSize;
 
             if (this.indexBuffer == null) {
-                this.indexBuffer = GLAllocationUtil.allocateByteBuffer(this.indexCount * indexTypeSize);
+                this.indexBuffer = GLAllocationUtils.allocateByteBuffer(this.indexCount * indexTypeSize);
             } else {
-                this.indexBuffer = GLAllocationUtil.reallocateByteBuffer(this.indexBuffer, this.indexCount * indexTypeSize);
+                this.indexBuffer = GLAllocationUtils.reallocateByteBuffer(this.indexBuffer, this.indexCount * indexTypeSize);
             }
             
             for (int j = 0, k = 0; j < this.indexCount / 6; ++j, k += 6 * indexTypeSize) {
@@ -100,6 +102,10 @@ public class VertexBuffer implements Destroyable {
         GL30.glBindVertexArray(this.vao);
     }
 
+    public void unbind() {
+        GL30.glBindVertexArray(0);
+    }
+
     public void draw() {
         Shader shader = Renderer.getCurrentShader();
 
@@ -114,10 +120,11 @@ public class VertexBuffer implements Destroyable {
             if (shader.colorUniform != null) shader.colorUniform.set(Renderer.getShaderColor());
 
             shader.bind();
+
+            this.format.setup();
+            GL20.glDrawElements(this.mode.glType, this.indexCount, this.indexType.glType, 0);
+            this.format.clear();
         }
-        this.format.setup();
-        GL30.glDrawElements(this.mode.glType, this.indexCount, this.indexType.glType, 0);
-        this.format.clear();
         
         if (shader != null) {
             shader.unbind();
@@ -126,6 +133,10 @@ public class VertexBuffer implements Destroyable {
 
     @Override
     public void destroy() {
+        if (this.indexBuffer != null) {
+            GLAllocationUtils.freeByteBuffer(this.indexBuffer);
+        }
+        
         if (this.vao == -1) {
             GL30.glDeleteVertexArrays(this.vao);
             this.vao = -1;

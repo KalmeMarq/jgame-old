@@ -1,1 +1,1 @@
-rootProject.name = "jgame"
+rootProject.name = providers.gradleProperty("projectName").get()

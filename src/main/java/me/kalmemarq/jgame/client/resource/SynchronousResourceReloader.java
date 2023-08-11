@@ -5,7 +5,7 @@ import me.kalmemarq.jgame.common.Unit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-public abstract class SyncResourceReloader implements ResourceReloader {
+public abstract class SynchronousResourceReloader implements ResourceReloader {
     @Override
     public CompletableFuture<Void> reload(ResourceLoader.PreparationSyncer preparationSyncer, Executor prepareExecutor, Executor applyExecutor, ResourceManager resourceManager) {
         return preparationSyncer.onPreparationComplete(Unit.INSTANCE).thenRunAsync(() -> this.reload(resourceManager), applyExecutor);

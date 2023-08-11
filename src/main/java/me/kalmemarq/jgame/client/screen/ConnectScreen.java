@@ -17,11 +17,13 @@ public class ConnectScreen extends Screen {
 
     @Override
     public void render(DrawContext context) {
-        context.drawString("Ip: " + this.ip, 10, 10, this.selectedIdx == 0 ? 0xFF_FFFFFF : 0xFF_999999);
-        context.drawString("Username: " + this.username, 10, 20, this.selectedIdx == 1 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawTexture("assets/minicraft/textures/title.png", this.width / 2 - 56, 10, 0, 112, 16, 0, 0, 112, 16, 112, 16, 0xFF_FFFFFF);
+        
+        context.drawString("Ip: " + this.ip, 10, 10 + 40, this.selectedIdx == 0 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("Username: " + this.username, 10, 20 + 40, this.selectedIdx == 1 ? 0xFF_FFFFFF : 0xFF_999999);
 
-        context.drawString("Connect", 10, 40, this.selectedIdx == 2 ? 0xFF_FFFFFF : 0xFF_999999);
-        context.drawString("Quit", 10, 50, this.selectedIdx == 3 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("Connect", 10, 40 + 40, this.selectedIdx == 2 ? 0xFF_FFFFFF : 0xFF_999999);
+        context.drawString("Back", 10, 50 + 40, this.selectedIdx == 3 ? 0xFF_FFFFFF : 0xFF_999999);
     }
 
     @Override
@@ -29,20 +31,20 @@ public class ConnectScreen extends Screen {
         if (key == GLFW.GLFW_KEY_UP) {
             --this.selectedIdx;
             if (this.selectedIdx < 0) this.selectedIdx = 3;
-            this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_DOWN) {
             ++this.selectedIdx;
             if (this.selectedIdx >= 4) this.selectedIdx = 0;
-            this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_SPACE) {
             if (this.selectedIdx == 2) {
                 this.client.setScreen(new ConnectingScreen());
             } else if (this.selectedIdx == 3) {
-                this.client.scheduleShutdown();
+                this.client.setScreen(new TitleScreen());
             }
         }
 
@@ -70,5 +72,10 @@ public class ConnectScreen extends Screen {
         } else if (this.selectedIdx == 1) {
             this.username += Character.toString(codepoint);
         }
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
     }
 }

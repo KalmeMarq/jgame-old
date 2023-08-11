@@ -1,17 +1,29 @@
 package me.kalmemarq.jgame.client;
 
+import io.netty.buffer.ByteBuf;
+import me.kalmemarq.jgame.client.render.Renderer;
+import me.kalmemarq.jgame.client.render.texture.MinicraftImage;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.OperatingSystem;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWDropCallback;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +39,6 @@ public class Window implements Destroyable {
     private int scaledWidth;
     private int scaledHeight;
     private boolean vsync;
-    private boolean fullscreen;
     private WindowEventHandler windowEventHandler;
     private boolean focused;
 
@@ -69,7 +80,8 @@ public class Window implements Destroyable {
             GLFW.glfwGetWindowSize(this.handle, pW, pH);
 
             GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-            GLFW.glfwSetWindowPos(this.handle, (vidMode.width() - pW.get(0)) / 2, (vidMode.height() - pH.get(0)) / 2);
+      
+            if (vidMode != null) GLFW.glfwSetWindowPos(this.handle, (vidMode.width() - pW.get(0)) / 2, (vidMode.height() - pH.get(0)) / 2);
         }
 
         GLFW.glfwMakeContextCurrent(this.handle);
@@ -96,8 +108,8 @@ public class Window implements Destroyable {
             GLFW.glfwGetFramebufferSize(this.handle, pFW, pFH);
             this.framebufferWidth = pFW.get(0);
             this.framebufferHeight = pFH.get(0);
-            this.scaledWidth = (int) (this.framebufferWidth / 2d);
-            this.scaledHeight = (int) (this.framebufferHeight / 2d);
+            this.scaledWidth = (int) (this.framebufferWidth / 3d);
+            this.scaledHeight = (int) (this.framebufferHeight / 3d);
         }
 
         GLFW.glfwSetWindowPosCallback(this.handle, this::onWindowPosChanged);
@@ -105,30 +117,113 @@ public class Window implements Destroyable {
         GLFW.glfwSetFramebufferSizeCallback(this.handle, this::onFramebufferSizeChanged);
         GLFW.glfwSetWindowFocusCallback(this.handle, this::onWindowFocusChanged);
 
-        GLFW.glfwSetMouseButtonCallback(this.handle, (_w, button, action, mods) -> {
-            mouseHandler.onMouseButton(button, action, mods);
-        });
-        GLFW.glfwSetCursorPosCallback(this.handle, (_w, xpos, ypos) -> {
-            mouseHandler.onCursorPos(xpos, ypos);
-        });
-        GLFW.glfwSetScrollCallback(this.handle, (_w, xoffset, yoffset) -> {
-            mouseHandler.onScroll(xoffset, yoffset);
-        });
+        GLFW.glfwSetMouseButtonCallback(this.handle, (_w, button, action, mods) -> mouseHandler.onMouseButton(button, action, mods));
+        GLFW.glfwSetCursorPosCallback(this.handle, (_w, xpos, ypos) -> mouseHandler.onCursorPos(xpos, ypos));
+        GLFW.glfwSetScrollCallback(this.handle, (_w, xoffset, yoffset) -> mouseHandler.onScroll(xoffset, yoffset));
         GLFW.glfwSetDropCallback(this.handle, (_w, count, names) -> {
             List<File> files = new ArrayList<>();
             for (int i = 0; i < count; ++i) files.add(new File(GLFWDropCallback.getName(names, i)));
             mouseHandler.onFileDrop(files);
         });
-        GLFW.glfwSetKeyCallback(this.handle, (_w, key, scancode, action, mods) -> {
-            keyboardHandler.onKey(key, scancode, action, mods);
-        });
-        GLFW.glfwSetCharCallback(this.handle, (_w, codepoint) -> {
-            keyboardHandler.onCharTyped(codepoint);
-        });
+        GLFW.glfwSetKeyCallback(this.handle, (_w, key, scancode, action, mods) -> keyboardHandler.onKey(key, scancode, action, mods));
+        GLFW.glfwSetCharCallback(this.handle, (_w, codepoint) -> keyboardHandler.onCharTyped(codepoint));
 
+        try {
+            this.setIcon(
+                Window.class.getResourceAsStream("/assets/minicraft/icons/icon16.png"),
+                Window.class.getResourceAsStream("/assets/minicraft/icons/icon32.png"),
+                Window.class.getResourceAsStream("/assets/minicraft/icons/icon48.png"),
+                Window.class.getResourceAsStream("/assets/minicraft/icons/icon64.png")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         GL.createCapabilities();
+        Renderer.initialize();
         GL11.glViewport(0, 0, this.width, this.height);
         this.focused = GLFW.glfwGetWindowAttrib(this.handle, GLFW.GLFW_FOCUSED) == 1;
+    }
+    
+    public void setIcon(InputStream ...iconStreams) {
+        int platform = GLFW.glfwGetPlatform();
+
+        if (platform == GLFW.GLFW_PLATFORM_WIN32 || platform == GLFW.GLFW_PLATFORM_X11) {
+            int[] widths = new int[16];
+            int[] heights = new int[16];
+            List<ByteBuffer> buf0 = new ArrayList<>();
+
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                for (int i = 0, j = 0; i < iconStreams.length; ++i) {
+                    ByteBuffer buffer;
+                    try {
+                        buffer = readIcon(iconStreams[i]);
+                    } catch (IOException e) {
+                        continue;
+                    }
+                    buffer.rewind();
+
+                    IntBuffer pWidth = stack.mallocInt(1);
+                    IntBuffer pHeight = stack.mallocInt(1);
+                    IntBuffer pComps = stack.mallocInt(1);
+
+                    ByteBuffer buffer1 = STBImage.stbi_load_from_memory(buffer, pWidth, pHeight, pComps, 4);
+
+                    if (buffer1 != null) {
+                        widths[j] = pWidth.get(0);
+                        heights[j] = pHeight.get(0);
+                        buf0.add(buffer1);
+                    }
+
+                    MemoryUtil.memFree(buffer);
+                    ++j;
+                }
+            }
+
+            try (GLFWImage.Buffer icons = GLFWImage.malloc(buf0.size())) {
+                for (int i = 0; i < buf0.size(); ++i) {
+                    icons.position(i).width(widths[i]).height(heights[i]).pixels(buf0.get(i));
+                }
+                GLFW.glfwSetWindowIcon(this.handle, icons);
+            }
+
+            for (ByteBuffer b : buf0) {
+                STBImage.stbi_image_free(b);
+            }
+        } else if (platform == GLFW.GLFW_PLATFORM_COCOA) {
+            // TODO: https://github.com/shannah/Java-Objective-C-Bridge
+        }
+    }
+    
+    private ByteBuffer readIcon(InputStream inputStream) throws IOException {
+        ReadableByteChannel channel = Channels.newChannel(inputStream);
+        ByteBuffer buffer = MemoryUtil.memAlloc(channel instanceof SeekableByteChannel ? ((int) ((SeekableByteChannel) channel).size() + 1)  : 8192);
+        
+        try {
+            while (channel.read(buffer) != -1) {
+                if (!buffer.hasRemaining()) {
+                    buffer = MemoryUtil.memRealloc(buffer, (int) (buffer.capacity() * 1.5));
+                }
+            }
+            return buffer;
+        } catch (IOException e) {
+            MemoryUtil.memFree(buffer);
+            throw e;
+        }
+    }
+
+    public boolean isFocused() {
+        return this.focused;
+    }
+    
+    public void setVsync(boolean vsync) {
+        if (this.vsync == vsync) return;
+        this.vsync = vsync;
+        GLFW.glfwSwapInterval(this.vsync ? 1 : 0);
+    }
+
+    public boolean isVsyncEnabled() {
+        return this.vsync;
     }
 
     public void setTitle(String title) {
@@ -164,8 +259,8 @@ public class Window implements Destroyable {
     private void onFramebufferSizeChanged(long window, int width, int height) {
         this.framebufferWidth = width;
         this.framebufferHeight = height;
-        this.scaledWidth = (int) Math.ceil(width / 2d);
-        this.scaledHeight = (int) Math.ceil(height / 2d);
+        this.scaledWidth = (int) Math.ceil(width / 3d);
+        this.scaledHeight = (int) Math.ceil(height / 3d);
         this.windowEventHandler.onSizeChanged();
     }
 

@@ -13,16 +13,20 @@ public class Logger {
     private static final DateFormat DATE_FORMATTER = new SimpleDateFormat("HH:mm:ss:SSS");
     private static final PrintStream PRINT_STREAM = new PrintStream(System.out);
     private static final Date DATE = new Date();
-    private static LogLevel logLevel = LogLevel.FATAL;
-
-    public static void setLogLevel(LogLevel logLevel) {
-        Logger.logLevel = logLevel;
-    }
+    private static LogLevel logLevel = LogLevel.OFF;
 
     private final String name;
 
     private Logger(String name) {
         this.name = name;
+    }
+
+    public static void setLogLevel(LogLevel level) {
+        Logger.logLevel = level;
+    }
+
+    public static void setLogLevel(String level) {
+        Logger.logLevel = LogLevel.byName(level);
     }
 
     public static Logger getLogger() {
@@ -33,7 +37,7 @@ public class Logger {
         return new Logger(clazz.getSimpleName());
     }
 
-    public static Logger getLogger(String name) {
+    public static @NotNull Logger getLogger(String name) {
         return new Logger(name);
     }
 
@@ -79,7 +83,7 @@ public class Logger {
     }
 
     public void info(String message) {
-        if (logLevel.id < LogLevel.INFO.id) return;
+        if (logLevel.ordinal() < LogLevel.INFO.ordinal()) return;
         DATE.setTime(System.currentTimeMillis());
         String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/" + LogLevel.INFO.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
@@ -94,7 +98,7 @@ public class Logger {
     }
 
     public void warn(String message) {
-        if (logLevel.id < LogLevel.WARN.id) return;
+        if (logLevel.ordinal() < LogLevel.WARN.ordinal()) return;
         DATE.setTime(System.currentTimeMillis());
         String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.YELLOW + "[" + Thread.currentThread().getName() + "/" + LogLevel.WARN.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
@@ -109,7 +113,7 @@ public class Logger {
     }
 
     public void error(String message) {
-        if (logLevel.id < LogLevel.ERROR.id) return;
+        if (logLevel.ordinal() < LogLevel.ERROR.ordinal()) return;
         DATE.setTime(System.currentTimeMillis());
         String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/" + LogLevel.ERROR.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
         PRINT_STREAM.print(out);
@@ -124,7 +128,7 @@ public class Logger {
     }
 
     public void fatal(String message) {
-        if (logLevel.id < LogLevel.FATAL.id) return;
+        if (logLevel.ordinal() < LogLevel.FATAL.ordinal()) return;
         DATE.setTime(System.currentTimeMillis());
         String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.RED + "[" + Thread.currentThread().getName() + "/" + LogLevel.FATAL.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RED + message + Ansi.RESET + "\n";
         PRINT_STREAM.print(out);
@@ -139,7 +143,7 @@ public class Logger {
     }
 
     public void debug(String message) {
-        if (logLevel.id < LogLevel.DEBUG.id) return;
+        if (logLevel.ordinal() < LogLevel.DEBUG.ordinal()) return;
         DATE.setTime(System.currentTimeMillis());
         String out = Ansi.BLUE + "[" + DATE_FORMATTER.format(DATE) + "] " + Ansi.GREEN + "[" + Thread.currentThread().getName() + "/" + LogLevel.DEBUG.name + "] " + Ansi.CYAN + "(" + this.name + ") " + Ansi.RESET + message + "\n";
         PRINT_STREAM.print(out);
@@ -149,20 +153,48 @@ public class Logger {
         this.debug(this.formatMessage(message, args));
     }
     
+    public static boolean isInfoEnabled() {
+        return logLevel.ordinal() >= LogLevel.INFO.ordinal();
+    }
+
+    public static boolean isWarnEnabled() {
+        return logLevel.ordinal() >= LogLevel.WARN.ordinal();
+    }
+
+    public static boolean isErrorEnabled() {
+        return logLevel.ordinal() >= LogLevel.ERROR.ordinal();
+    }
+
+    public static boolean isFatalEnabled() {
+        return logLevel.ordinal() >= LogLevel.FATAL.ordinal();
+    }
+
+    public static boolean isDebugEnabled() {
+        return logLevel.ordinal() >= LogLevel.DEBUG.ordinal();
+    }
+    
     public enum LogLevel {
-        NONE(0, ""),
-        INFO(1, "Info"),
-        WARN(2, "Warn"),
-        ERROR(3, "Error"),
-        FATAL(4, "Fatal"),
-        DEBUG(5, "Debug");
+        OFF(""),
+        INFO("Info"),
+        WARN("Warn"),
+        ERROR("Error"),
+        FATAL("Fatal"),
+        DEBUG("Debug");
         
-        private final int id;
         private final String name;
         
-        LogLevel(final int id, final String name) {
-            this.id = id;
+        LogLevel(final String name) {
             this.name = name;
+        }
+        
+        public static LogLevel byName(String name) {
+            for (LogLevel level : LogLevel.values()) {
+                if (level.name.equals(name)) {
+                    return level;
+                }
+            }
+            
+            return LogLevel.OFF;
         }
     }
 

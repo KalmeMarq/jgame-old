@@ -7,11 +7,19 @@ public class Screen {
     protected Client client;
     protected int width;
     protected int height;
+    
+    protected boolean renderScreensBelow;
 
     public void init(Client client) {
         this.client = client;
         this.width = client.window.getScaledWidth();
         this.height = client.window.getScaledHeight();
+        this.init();
+    }
+    
+    public void resize(int width, int height) {
+        this.width = width;
+        this.height = height;
         this.init();
     }
 

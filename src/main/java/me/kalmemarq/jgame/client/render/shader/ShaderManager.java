@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.client.render;
+package me.kalmemarq.jgame.client.render.shader;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,7 +7,7 @@ import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.JacksonHelper;
-import me.kalmemarq.jgame.common.StringHelper;
+import me.kalmemarq.jgame.common.StringUtils;
 import me.kalmemarq.jgame.common.logger.Logger;
 
 import java.util.HashMap;
@@ -37,27 +37,36 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
         Map<String, String> cachedIncludes = new HashMap<>();
 
         try {
-            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/blit.json").getAsInputStream()));
+            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringUtils.readString(resourceManager.getResource("assets/minicraft/shaders/blit.json").getAsInputStream()));
             dataPC.put("vertex", readSource(cachedIncludes, dataPC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPC.put("fragment", readSource(cachedIncludes, dataPC.get("fragment").textValue() + ".fsh", resourceManager));
+            if (dataPC.has("geometry")) {
+                dataPC.put("geometry", readSource(cachedIncludes, dataPC.get("geometry").textValue() + ".gsh", resourceManager));
+            }
             shaders.put("blit", dataPC);
         } catch (JsonProcessingException | ClassCastException e) {
             e.printStackTrace();
         }
 
         try {
-            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/position_color.json").getAsInputStream()));
+            ObjectNode dataPC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringUtils.readString(resourceManager.getResource("assets/minicraft/shaders/position_color.json").getAsInputStream()));
             dataPC.put("vertex", readSource(cachedIncludes, dataPC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPC.put("fragment", readSource(cachedIncludes, dataPC.get("fragment").textValue() + ".fsh", resourceManager));
+            if (dataPC.has("geometry")) {
+                dataPC.put("geometry", readSource(cachedIncludes, dataPC.get("geometry").textValue() + ".gsh", resourceManager));
+            }
             shaders.put("position_color", dataPC);
         } catch (JsonProcessingException | ClassCastException e) {
             e.printStackTrace();
         }
 
         try {
-            ObjectNode dataPTC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringHelper.readString(resourceManager.getResource("shaders/position_texture_color.json").getAsInputStream()));
+            ObjectNode dataPTC = (ObjectNode) JacksonHelper.OBJECT_MAPPER.readTree(StringUtils.readString(resourceManager.getResource("assets/minicraft/shaders/position_texture_color.json").getAsInputStream()));
             dataPTC.put("vertex", readSource(cachedIncludes, dataPTC.get("vertex").textValue() + ".vsh", resourceManager));
             dataPTC.put("fragment", readSource(cachedIncludes, dataPTC.get("fragment").textValue() + ".fsh", resourceManager));
+            if (dataPTC.has("geometry")) {
+                dataPTC.put("geometry", readSource(cachedIncludes, dataPTC.get("geometry").textValue() + ".gsh", resourceManager));
+            }
             shaders.put("position_texture_color", dataPTC);
         } catch (JsonProcessingException | ClassCastException e) {
             e.printStackTrace();
@@ -101,7 +110,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
     }
 
     private static String readSource(Map<String, String> cachedIncludes, String name, ResourceManager resourceManager) {
-        return readSource(cachedIncludes, "shaders/" + name, StringHelper.readString(resourceManager.getResource("shaders/" + name).getAsInputStream()), new PreProcessorContext(), resourceManager);
+        return readSource(cachedIncludes, "assets/minicraft/shaders/" + name, StringUtils.readString(resourceManager.getResource("assets/minicraft/shaders/" + name).getAsInputStream()), new PreProcessorContext(), resourceManager);
     }
 
     private static String readSource(Map<String, String> cachedIncludes, String sourcePath, String source, PreProcessorContext context, ResourceManager resourceManager) {
@@ -131,7 +140,7 @@ public class ShaderManager extends PreparationResourceReloader<Map<String, JsonN
                     continue;
                 }
 
-                String includSource = readSource(cachedIncludes, path, StringHelper.readString(resourceManager.getResource("shaders/include/" + path).getAsInputStream()), context, resourceManager);
+                String includSource = readSource(cachedIncludes, path, StringUtils.readString(resourceManager.getResource("assets/minicraft/shaders/include/" + path).getAsInputStream()), context, resourceManager);
                 sb.append(includSource);
                 cachedIncludes.put(path, includSource);
             }

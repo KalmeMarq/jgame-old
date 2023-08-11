@@ -1,13 +1,12 @@
 package me.kalmemarq.jgame.client.render;
 
-import me.kalmemarq.jgame.client.Client;
+import me.kalmemarq.jgame.client.render.shader.ShaderManager;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.logger.Logger;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 public class Framebuffer implements Destroyable {
-    private static final Logger LOGGER = Logger.getLogger();
+    private boolean initialized;
     private int fbo = -1;
     private int ftexture = -1;
     private int rbo = -1;
@@ -17,13 +16,22 @@ public class Framebuffer implements Destroyable {
     public Framebuffer() {
     }
     
-    private void resize(Client client) {
+    public Framebuffer(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+    
+    public void resize(int width, int height) {
+        this.initialized = true;
+        this.width = width;
+        this.height = height;
+        
         if (this.fbo != -1) {
             GL30.glDeleteRenderbuffers(this.rbo);
         }
 
         if (this.ftexture != -1) {
-            GL30.glDeleteTextures(this.ftexture);
+            GL11.glDeleteTextures(this.ftexture);
         }
 
         if (this.fbo != -1) {
@@ -33,12 +41,12 @@ public class Framebuffer implements Destroyable {
         this.fbo = GL30.glGenFramebuffers();
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fbo);
 
-        this.ftexture = GL11.glGenTextures();
-        GL30.glBindTexture(GL11.GL_TEXTURE_2D, this.ftexture);
-        GL30.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB, this.width, this.height, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, 0L);
-        GL30.glTexParameteri(GL30.GL_TEXTURE_2D, GL30.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-        GL30.glTexParameteri(GL30.GL_TEXTURE_2D, GL30.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-        GL30.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        this.ftexture = GL30.glGenTextures();
+        GL30.glBindTexture(GL30.GL_TEXTURE_2D, this.ftexture);
+        GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RGB, this.width, this.height, 0, GL30.GL_RGB, GL30.GL_UNSIGNED_BYTE, 0L);
+        GL30.glTexParameteri(GL30.GL_TEXTURE_2D, GL30.GL_TEXTURE_MIN_FILTER, GL30.GL_LINEAR);
+        GL30.glTexParameteri(GL30.GL_TEXTURE_2D, GL30.GL_TEXTURE_MAG_FILTER, GL30.GL_LINEAR);
+        GL30.glBindTexture(GL30.GL_TEXTURE_2D, 0);
 
         GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL30.GL_TEXTURE_2D, this.ftexture, 0);
 
@@ -49,22 +57,31 @@ public class Framebuffer implements Destroyable {
 
         GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_STENCIL_ATTACHMENT, GL30.GL_RENDERBUFFER, this.rbo);
 
-        if (GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER) != GL30.GL_FRAMEBUFFER_COMPLETE) {
-            throw new RuntimeException("Framebuffer is not complete!");
+        int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+        if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+            throw new RuntimeException("Framebuffer Error: " + getBetterError(status));
         }
 
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
     }
     
+    private static String getBetterError(int error) {
+        return switch (error) {
+            case GL30.GL_FRAMEBUFFER_UNDEFINED -> "Undefined";
+            case GL30.GL_FRAMEBUFFER_UNSUPPORTED -> "Unsupported";
+            case GL30.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT -> "Incomplete attachment";
+            case GL30.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT -> "Missing attachment";
+            case GL30.GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER -> "Incomplete read buffer";
+            default -> "Unknown error " + error;
+        };
+    }
+    
     public void begin() {
-        Client client = Client.getInstance();
-        if (this.width != client.window.getFramebufferWidth() || this.height != client.window.getFramebufferHeight()) {
-            this.width = client.window.getFramebufferWidth();
-            this.height = client.window.getFramebufferHeight();
-            LOGGER.debug("Resizing framebuffer");
-            this.resize(client);
+        if (!this.initialized) {
+            this.resize(this.width, this.height);
         }
-
+        
+        GL11.glViewport(0, 0, this.width, this.height);
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.fbo);
     }
     
@@ -73,9 +90,9 @@ public class Framebuffer implements Destroyable {
     }
     
     public void draw() {
-        GL30.glColorMask(true, true, true, false);
-        GL30.glDisable(GL30.GL_DEPTH_TEST);
-        GL30.glDepthMask(false);
+        GL11.glColorMask(true, true, true, false);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(false);
         
         Renderer.setCurrentShader(ShaderManager::getBlitShader);
         Renderer.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -89,8 +106,8 @@ public class Framebuffer implements Destroyable {
         builder.vertex(1, -1, 0).texture(1, 0).next();
         tessellator.draw();
 
-        GL30.glDepthMask(true);
-        GL30.glColorMask(true, true, true, true);
+        GL11.glDepthMask(true);
+        GL11.glColorMask(true, true, true, true);
     }
 
     @Override

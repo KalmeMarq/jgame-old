@@ -1,11 +1,14 @@
 package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.common.Destroyable;
+import org.joml.Math;
 import org.joml.Matrix4f;
+import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-public class BufferBuilder implements VertexConsumer {
+public class BufferBuilder implements VertexConsumer, Destroyable {
     private boolean building;
     private final ByteBuffer buffer;
     private VertexFormat format;
@@ -16,11 +19,15 @@ public class BufferBuilder implements VertexConsumer {
     private int vertexCount;
     
     public BufferBuilder(int capacity) {
-        this.buffer = GLAllocationUtil.allocateByteBuffer(capacity);
+        this.buffer = GLAllocationUtils.allocateByteBuffer(capacity);
     }
 
     public void begin(VertexFormat format) {
         this.begin(DrawMode.QUADS, format);
+    }
+
+    public boolean isBuilding() {
+        return this.building;
     }
 
     public void begin(DrawMode mode, VertexFormat format) {
@@ -32,7 +39,6 @@ public class BufferBuilder implements VertexConsumer {
         this.format = format;
         this.currentAttributeId = 0;
         this.currentAttribute = format.attributes[0];
-        this.attributeOffset = 0;
         this.vertexCount = 0;
         this.buffer.rewind();
     }
@@ -51,14 +57,17 @@ public class BufferBuilder implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer vertex(Matrix4f matrix, float x, float y, float z) {
-        return this.vertex(x, y, z);
+    public BufferBuilder vertex(Matrix4f matrix, float x, float y, float z) {
+        float dx = Math.fma(matrix.m00(), x, Math.fma(matrix.m10(), y, Math.fma(matrix.m20(), z, matrix.m30() * 1)));
+        float dy = Math.fma(matrix.m01(), x, Math.fma(matrix.m11(), y, Math.fma(matrix.m21(), z, matrix.m31() * 1)));
+        float dz = Math.fma(matrix.m02(), x, Math.fma(matrix.m12(), y, Math.fma(matrix.m22(), z, matrix.m32() * 1)));
+        return this.vertex(dx, dy, dz);
     }
 
     public BufferBuilder vertex(Matrix4f matrix, double x, double y, double z) {
-        return this.vertex(x, y, z);
+        return this.vertex(matrix, (float) x, (float) y, (float) z);
     }
-
+    
     public BufferBuilder vertex(double x, double y, double z) {
         if (this.currentAttribute != VertexFormatAttribute.POSITION) return this;
         this.buffer.putFloat(this.attributeOffset, (float) x);
@@ -69,7 +78,7 @@ public class BufferBuilder implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer vertex(float x, float y, float z) {
+    public BufferBuilder vertex(float x, float y, float z) {
         if (this.currentAttribute != VertexFormatAttribute.POSITION) return this;
         this.buffer.putFloat(this.attributeOffset, x);
         this.buffer.putFloat(this.attributeOffset + 4, y);
@@ -97,12 +106,20 @@ public class BufferBuilder implements VertexConsumer {
         return this;
     }
 
+    public void setVertexCount(int vertexCount) {
+        this.vertexCount = vertexCount;
+    }
+
+    public int getVertexCount() {
+        return this.vertexCount;
+    }
+
     public BuiltBuffer end() {
         if (!this.building) {
             throw new IllegalStateException("Not building!");
         }
 
-        BuiltBuffer builtBuffer = new BuiltBuffer(this.format, this.mode, MemoryUtil.memSlice(this.buffer, 0, this.attributeOffset), this.vertexCount);
+        BuiltBuffer builtBuffer = new BuiltBuffer(this.format, this.mode, MemoryUtil.memSlice(this.buffer, 0, this.attributeOffset), this.vertexCount, this.mode.getIndexCount(this.vertexCount));
         this.format = null;
         this.mode = null;
         this.currentAttribute = null;
@@ -112,19 +129,26 @@ public class BufferBuilder implements VertexConsumer {
         return builtBuffer;
     }
 
+    @Override
+    public void destroy() {
+        GLAllocationUtils.freeByteBuffer(this.buffer);
+    }
+
     public class BuiltBuffer {
         private final VertexFormat format;
         private final DrawMode mode;
         private final ByteBuffer buffer;
         private final int vertexCount;
+        private final int indexCount;
 
         private boolean released;
 
-        public BuiltBuffer(VertexFormat format, DrawMode mode, ByteBuffer buffer, int vertexCount) {
+        public BuiltBuffer(VertexFormat format, DrawMode mode, ByteBuffer buffer, int vertexCount, int indexCount) {
             this.format = format;
             this.mode = mode;
             this.buffer = buffer;
             this.vertexCount = vertexCount;
+            this.indexCount = indexCount;
         }
 
         public VertexFormat format() {
@@ -139,6 +163,10 @@ public class BufferBuilder implements VertexConsumer {
             return this.mode;
         }
 
+        public int indexCount() {
+            return this.indexCount;
+        }
+
         public int vertexCount() {
             return this.vertexCount;
         }
@@ -151,8 +179,7 @@ public class BufferBuilder implements VertexConsumer {
             if (this.released) {
                 return;
             }
-
-            BufferBuilder.this.buffer.clear();
+            BufferBuilder.this.attributeOffset = 0;
             this.released = true;
         }
     }

@@ -1,21 +1,21 @@
 package me.kalmemarq.jgame.client.render;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL20;
 
 public class VertexFormatAttribute {
     public static VertexFormatAttribute POSITION = new VertexFormatAttribute(ComponentType.FLOAT, 3, (index, components, type, stride, offset) -> {
-        GL30.glEnableVertexAttribArray(index);
-        GL30.glVertexAttribPointer(index, components, type, false, stride, offset);
-    }, GL30::glDisableVertexAttribArray);
+        GL20.glEnableVertexAttribArray(index);
+        GL20.glVertexAttribPointer(index, components, type, false, stride, offset);
+    }, GL20::glDisableVertexAttribArray);
     public static VertexFormatAttribute TEXTURE = new VertexFormatAttribute(ComponentType.FLOAT, 2, (index, components, type, stride, offset) -> {
-        GL30.glEnableVertexAttribArray(index);
-        GL30.glVertexAttribPointer(index, components, type, false, stride, offset);
-    }, GL30::glDisableVertexAttribArray);
+        GL20.glEnableVertexAttribArray(index);
+        GL20.glVertexAttribPointer(index, components, type, false, stride, offset);
+    }, GL20::glDisableVertexAttribArray);
     public static VertexFormatAttribute COLOR = new VertexFormatAttribute(ComponentType.UBYTE, 4, (index, components, type, stride, offset) -> {
-        GL30.glEnableVertexAttribArray(index);
-        GL30.glVertexAttribPointer(index, components, type, true, stride, offset);
-    }, GL30::glDisableVertexAttribArray);
+        GL20.glEnableVertexAttribArray(index);
+        GL20.glVertexAttribPointer(index, components, type, true, stride, offset);
+    }, GL20::glDisableVertexAttribArray);
     
     public final int byteSize;
     public final int components;

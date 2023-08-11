@@ -6,6 +6,8 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
+import me.kalmemarq.jgame.common.Lazy;
 import me.kalmemarq.jgame.common.network.packet.Packet;
 import me.kalmemarq.jgame.common.network.packet.PacketCallbacks;
 import me.kalmemarq.jgame.common.network.packet.PacketDecoder;
@@ -14,6 +16,20 @@ import me.kalmemarq.jgame.common.network.packet.PacketEncoder;
 import java.net.SocketAddress;
 
 public class NetworkConnection extends SimpleChannelInboundHandler<Packet> {
+    public static final Lazy<NioEventLoopGroup> CLIENT_EVENT_GROUP = new Lazy<>(() -> new NioEventLoopGroup(0, runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("Netty Client IO");
+        thread.setDaemon(true);
+        return thread;
+    }));
+
+    public static final Lazy<NioEventLoopGroup> SERVER_EVENT_GROUP = new Lazy<>(() -> new NioEventLoopGroup(0, runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("Netty Server IO");
+        thread.setDaemon(true);
+        return thread;
+    }));
+    
     private Channel channel;
     private SocketAddress address;
     private Packet.PacketListener packetListener;

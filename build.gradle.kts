@@ -3,16 +3,38 @@ plugins {
     id("application")
 }
 
-group = "me.kalmemarq"
-version = "1.0.0"
+group = providers.gradleProperty("mavenGroup").get()
+version = providers.gradleProperty("gameVersion").get()
 
-val nettyVersion = "4.1.94.Final"
-val jbAnnotationsVersion = "24.0.1"
-val lwjglVersion = "3.3.2"
-val jomlVersion = "1.10.5"
-val lwjglNatives = "natives-windows"
-val jacksonVersion = "2.15.2"
-val brigadierVersion = "1.0.18"
+val nettyVersion: String by project
+val jbAnnotationsVersion: String by project
+val lwjglVersion: String by project
+val jomlVersion: String by project
+val jacksonVersion: String by project
+val brigadierVersion: String by project
+val imGuiVersion: String by project
+
+val lwjglNatives = Pair(
+    System.getProperty("os.name")!!,
+    System.getProperty("os.arch")!!
+).let { (name, arch) ->
+    when {
+        arrayOf("Linux", "FreeBSD", "SunOS", "Unit").any { name.startsWith(it) } ->
+            if (arrayOf("arm", "aarch64").any { arch.startsWith(it) })
+                "natives-linux${if (arch.contains("64") || arch.startsWith("armv8")) "-arm64" else "-arm32"}"
+            else
+                "natives-linux"
+        arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) }                ->
+            "natives-macos${if (arch.startsWith("aarch64")) "-arm64" else ""}"
+        arrayOf("Windows").any { name.startsWith(it) }                           ->
+            if (arch.contains("64"))
+                "natives-windows${if (arch.startsWith("aarch64")) "-arm64" else ""}"
+            else
+                "natives-windows-x86"
+        else -> throw Error("Unrecognized or unsupported platform. Please set \"lwjglNatives\" manually")
+    }
+}
+
 
 repositories {
     mavenCentral()
@@ -48,5 +70,8 @@ dependencies {
 
     implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+
+    implementation("io.github.spair:imgui-java-app:$imGuiVersion")
+
     compileOnly("org.jetbrains:annotations:$jbAnnotationsVersion")
 }

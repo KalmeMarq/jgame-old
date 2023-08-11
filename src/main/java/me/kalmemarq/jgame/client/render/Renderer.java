@@ -1,18 +1,31 @@
 package me.kalmemarq.jgame.client.render;
 
 import me.kalmemarq.jgame.client.Client;
+import me.kalmemarq.jgame.client.render.shader.Shader;
+import me.kalmemarq.jgame.client.render.texture.Texture;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GLCapabilities;
 
 import java.util.function.Supplier;
 
 public class Renderer {
+    public static boolean supportsGeometryShader;
+    
     private static Matrix4f PROJECTION_MATRIX = new Matrix4f().identity();
     private static Matrix4f MODE_VIEW_MATRIX = new Matrix4f().identity();
     private static final float[] SHADER_COLOR = { 1.0f, 1.0f, 1.0f, 1.0f };
     private static Shader CURRENT_SHADER = null;
     private static final int[] SHADER_TEXTURES = new int[12];
+    
+    public static void initialize() {
+        GLCapabilities capabilities = GL.getCapabilities();
+        supportsGeometryShader = capabilities.GL_EXT_geometry_shader4 || capabilities.OpenGL32;
+    }
 
     public static void setShaderTexture(int slot, int textureId) {
         SHADER_TEXTURES[slot] = textureId;
@@ -39,6 +52,10 @@ public class Renderer {
     public static void setProjectionMatrix(Matrix4f matrix) {
         PROJECTION_MATRIX = matrix;
     }
+    
+    public static void setProjectionMatrixIdentity() {
+        PROJECTION_MATRIX.identity();
+    }
 
     public static Matrix4f getProjectionMatrix() {
         return PROJECTION_MATRIX;
@@ -46,6 +63,10 @@ public class Renderer {
 
     public static void setModeViewMatrix(Matrix4f matrix) {
         MODE_VIEW_MATRIX = matrix;
+    }
+
+    public static void setModelViewMatrixIdentity() {
+        MODE_VIEW_MATRIX.identity();
     }
 
     public static Matrix4f getModeViewMatrix() {
@@ -63,9 +84,6 @@ public class Renderer {
         return SHADER_COLOR;
     }
 
-    private static boolean textured2DCap = false;
-    private static boolean blendCap = false;
-
     public static void clear(boolean color, boolean depth, boolean stencil) {
         int mask = 0;
         if (color) mask |= GL11.GL_COLOR_BUFFER_BIT;
@@ -77,36 +95,84 @@ public class Renderer {
         }
     }
 
-    public static void enableTexture() {
-        if (textured2DCap) return;
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        textured2DCap = true;
-    }
-
-    public static void disableTexture() {
-        if (!textured2DCap) return;
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        textured2DCap = false;
-    }
-
     public static void enableBlend() {
-        if (blendCap) return;
         GL11.glEnable(GL11.GL_BLEND);
-        blendCap = true;
     }
 
     public static void disableBlend() {
-        if (!blendCap) return;
         GL11.glDisable(GL11.GL_BLEND);
-        blendCap = false;
+    }
+    
+    public static void defaultBlendFunc() {
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    public static void blendFunc(BlendFactor srcFactor, BlendFactor dstFactor) {
+    public static void enableDepthTest() {
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+    }
+
+    public static void disableDepthTest() {
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+    }
+
+    public static void enableAlphaTest() {
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+    }
+
+    public static void disableAlphaTest() {
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+    }
+
+    public static void enableScissorTest() {
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    }
+
+    public static void disableScissorTest() {
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    public static void enableCulling() {
+        GL11.glEnable(GL11.GL_CULL_FACE);
+    }
+
+    public static void disableCulling() {
+        GL11.glDisable(GL11.GL_CULL_FACE);
+    }
+    
+    public static void blendColor(float red, float green, float blue, float alpha) {
+        GL15.glBlendColor(red, green, blue, alpha);
+    }
+
+    public static void blendEquation(BlendEquation mode) {
+        GL14.glBlendEquation(mode.glType);
+    }
+
+    public static void blendEquationSeparate(BlendEquation modeRGB, BlendEquation modeAlpha) {
+        GL20.glBlendEquationSeparate(modeRGB.glType, modeAlpha.glType);
+    }
+    
+    public static void blendFunction(BlendFactor srcFactor, BlendFactor dstFactor) {
         GL11.glBlendFunc(srcFactor.glType, dstFactor.glType);
     }
 
-    public static void blendSeparateFunc(BlendFactor srcRGBFactor, BlendFactor dstRGBFactor, BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor) {
+    public static void blendFunctionSeparate(BlendFactor srcRGBFactor, BlendFactor dstRGBFactor, BlendFactor srcAlphaFactor, BlendFactor dstAlphaFactor) {
         GL15.glBlendFuncSeparate(srcRGBFactor.glType, dstRGBFactor.glType, srcAlphaFactor.glType, dstAlphaFactor.glType);
+    }
+    
+    public static void colorMask(boolean red, boolean green, boolean blue, boolean alpha) {
+        GL11.glColorMask(red, green, blue, alpha);
+    }
+    
+    public static void depthMask(boolean flag) {
+        GL11.glDepthMask(flag);
+    }
+    
+    public static void cullingMode(CullFace mode) {
+        GL11.glCullFace(mode.glType);
+    }
+
+    public static void frontFace(FrontFace facing) {
+        GL11.glFrontFace(facing.glType);
     }
 
     public enum BlendFactor {
@@ -131,6 +197,20 @@ public class Renderer {
             this.glType = glType;
         }
     }
+    
+    public enum BlendEquation {
+        FUNC_ADD(GL14.GL_FUNC_ADD),
+        FUNC_SUBTRACT(GL14.GL_FUNC_SUBTRACT),
+        FUNC_REVERSE_SUBTRACT(GL14.GL_FUNC_REVERSE_SUBTRACT),
+        MIN(GL14.GL_MIN),
+        MAX(GL14.GL_MAX);
+
+        public final int glType;
+
+        BlendEquation(final int glType) {
+            this.glType = glType;
+        }
+    }
 
     public enum PrimitiveType {
         TRIANGLES(GL11.GL_TRIANGLES),
@@ -147,16 +227,26 @@ public class Renderer {
             this.glType = glType;
         }
     }
-
-    @Deprecated
-    public enum MatrixMode {
-        PROJECTION(GL11.GL_PROJECTION),
-        MODELVIEW(GL11.GL_MODELVIEW),
-        TEXTURE(GL11.GL_TEXTURE);
+    
+    public enum CullFace {
+        FRONT(GL11.GL_FRONT),
+        BACK(GL11.GL_BACK),
+        FRONT_AND_BACK(GL11.GL_FRONT_AND_BACK);
 
         public final int glType;
 
-        MatrixMode(final int glType) {
+        CullFace(final int glType) {
+            this.glType = glType;
+        }
+    }
+    
+    public enum FrontFace {
+        CW(GL11.GL_CW),
+        CCW(GL11.GL_CCW);
+
+        public final int glType;
+
+        FrontFace(final int glType) {
             this.glType = glType;
         }
     }

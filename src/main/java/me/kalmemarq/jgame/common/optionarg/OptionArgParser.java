@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OptionArgParser {
-    private final List<OptionArg<?>> args = new ArrayList<>();
+    private final List<OptionArg<?>> options = new ArrayList<>();
 
     public <T> OptionArg<T> add(String name, Class<T> clazz) {
         return this.add(name, name, clazz);
@@ -14,56 +14,65 @@ public class OptionArgParser {
 
     public <T> OptionArg<T> add(String name, String alias, Class<T> clazz) {
         OptionArg<T> option = new OptionArg<T>(clazz, name, alias);
-        this.args.add(option);
+        this.options.add(option);
         return option;
     }
 
     public void parseArgs(String[] argv) {
         Map<String, List<String>> params = new HashMap<>();
 
-        List<String> options = null;
-        for (int i = 0; i < argv.length; i++) {
-            final String a = argv[i];
+        List<String> values = null;
+        
+        for (int i = 0; i < argv.length; ++i) {
+            if (argv[i].charAt(0) == '-' && argv[i].charAt(1) == '-' && argv[i].length() >= 3) {
+                values = new ArrayList<>();
+                String name = argv[i].substring(2);
+                
+                if (name.contains("=")) {
+                    String value = name.substring(name.indexOf("=") + 1);
+                    values.add(value);
+                    name = name.substring(0, name.indexOf("="));
+                }
+                params.put(name, values);
+            } else if (argv[i].charAt(0) == '-' && argv[i].length() >= 2) {
+                values = new ArrayList<>();
+                String name = argv[i].substring(1);
 
-            if (a.charAt(0) == '-' || (a.charAt(0) == '-' && a.charAt(1) == '-')) {
-                boolean isD = a.charAt(1) == '-';
-                if ((isD && a.length() < 3) || a.length() < 2) {
-                    System.err.println("Error at argument " + a);
-                    return;
+                if (name.contains("=")) {
+                    String value = name.substring(name.indexOf("=") + 1);
+                    values.add(value);
+                    name = name.substring(0, name.indexOf("="));
                 }
 
-                options = new ArrayList<>();
-
-                if (a.contains("=")) {
-                    String n = a.substring(isD ? 2 : 1, a.indexOf("="));
-                    params.put(n, options);
-                } else {
-                    params.put(a.substring(isD ? 2 : 1), options);
-                }
-            } else if (options != null) {
-                options.add(a);
+                params.put(name, values);
+            } else if (values != null) {
+                values.add(argv[i]);
             } else {
                 System.err.println("Illegal parameter usage");
                 return;
             }
         }
+        
+        this.parseOptions(params);
+    }
+    
+    private void parseOptions(Map<String, List<String>> params) {
+        for (OptionArg<?> option : this.options) {
+            List<String> values = params.get(option.name);
 
-        for (OptionArg<?> op : this.args) {
-            List<String> l = params.get(op.name);
-
-            if (l == null)  {
-                l = params.get(op.alias);
+            if (values == null)  {
+                values = params.get(option.alias);
             }
 
-            if (l != null) {
-                op.parseValues(l);
+            if (values != null) {
+                option.parseValues(values);
                 continue;
             } else {
-                op.onNotFound();
+                option.onNotFound();
             }
 
-            if (op.required)  {
-                throw new RuntimeException("Missing '" + op.name + "' option argument");
+            if (option.required)  {
+                throw new RuntimeException("Missing '" + option.name + "' option option");
             }
         }
     }

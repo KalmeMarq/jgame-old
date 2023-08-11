@@ -10,7 +10,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.Util;
 import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.CommandC2SPacket;
 import me.kalmemarq.jgame.common.network.packet.DisconnectPacket;
@@ -61,14 +60,14 @@ public class Server implements Destroyable {
             literal("PLAYSOUND")
                .executes(ctx -> {
 
-                   ctx.getSource().connection.sendPacket(new PlaySoundS2CPacket("select.ogg", 1.0f, 1.0f));
+                   ctx.getSource().connection.sendPacket(new PlaySoundS2CPacket("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f));
 
                    return 0;
                })
         );
 
         ServerBootstrap bootstrap = new ServerBootstrap()
-                .group(Util.SERVER_EVENT_GROUP.get())
+                .group(NetworkConnection.SERVER_EVENT_GROUP.get())
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<>() {
                     @Override

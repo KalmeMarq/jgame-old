@@ -1,4 +1,5 @@
 {
-  "vsync" : false,
-  "sound" : true
+  "vsync" : "true",
+  "sound" : "true",
+  "fps" : "60"
 }

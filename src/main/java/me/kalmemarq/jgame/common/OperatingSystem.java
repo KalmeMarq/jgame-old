@@ -1,7 +1,6 @@
 package me.kalmemarq.jgame.common;
 
 import me.kalmemarq.jgame.common.logger.Logger;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,28 +112,27 @@ public enum OperatingSystem {
         });
     }
 
-    @Nullable
-    private static OperatingSystem CACHE;
+    private static OperatingSystem cachedValue = null;
     
     public static OperatingSystem get() {
-        if (CACHE != null) {
-            return CACHE;
+        if (cachedValue != null) {
+            return cachedValue;
         }
 
         String os = System.getProperty("os.name").toLowerCase();
 
         if (os.contains("win")) {
-            CACHE = OperatingSystem.WINDOWS;
+            cachedValue = OperatingSystem.WINDOWS;
         } else if (os.contains("mac") || os.contains("darwin")) {
-            CACHE = OperatingSystem.MACOS;
+            cachedValue = OperatingSystem.MACOS;
         } else if (os.contains("nix") || os.contains("nux") || os.contains("aix") || os.contains("linux")) {
-            CACHE = OperatingSystem.LINUX;
+            cachedValue = OperatingSystem.LINUX;
         } else if (os.contains("sunos")) {
-            CACHE = OperatingSystem.SOLARIS;
+            cachedValue = OperatingSystem.SOLARIS;
         } else {
-            CACHE = OperatingSystem.UNKNOWN;
+            cachedValue = OperatingSystem.UNKNOWN;
         }
 
-        return CACHE;
+        return cachedValue;
     }
 }

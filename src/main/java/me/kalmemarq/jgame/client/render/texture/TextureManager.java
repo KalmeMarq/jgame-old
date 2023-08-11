@@ -1,7 +1,7 @@
-package me.kalmemarq.jgame.client.render;
+package me.kalmemarq.jgame.client.render.texture;
 
 import me.kalmemarq.jgame.client.resource.ResourceManager;
-import me.kalmemarq.jgame.client.resource.SyncResourceReloader;
+import me.kalmemarq.jgame.client.resource.SynchronousResourceReloader;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.logger.Logger;
 
@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TextureManager extends SyncResourceReloader implements Destroyable {
+public class TextureManager extends SynchronousResourceReloader implements Destroyable {
     private static final Logger LOGGER = Logger.getLogger();
 
     private final HashMap<String, Texture> textures = new HashMap<>();

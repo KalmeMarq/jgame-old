@@ -75,7 +75,7 @@ public class Main {
                                 }
                             } else if (line.startsWith("/playsound")) {
                                 for (NetworkConnection connection : server.connections) {
-                                    connection.sendPacket(new PlaySoundS2CPacket("select.ogg", 1.0f, 1.0f));
+                                    connection.sendPacket(new PlaySoundS2CPacket("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f));
                                 }
                             } else if (line.startsWith("/playercount")) {
                                 chatArea.append("Player Count: " + server.connections.size() + "\n");

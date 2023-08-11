@@ -42,7 +42,7 @@ public class ClientNetworkHandler implements Packet.ClientPacketListener {
     @Override
     public void onPlaySoundPacket(PlaySoundS2CPacket packet) {
         System.out.println("bruh s: " + packet.getPath());
-        this.client.soundManager.play(new SoundInstance("/select.ogg", 1.0f, 1.0f, 0, 0, 0, false));
+        this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0, 0, 0, false));
     }
 
     @Override

@@ -21,17 +21,17 @@ public abstract class ThreadExecutor implements Executor {
     public abstract Thread getMainThread();
 
     public void runQueueTask() {
-        if (this.runnables.size() == 0) return;
+        if (this.runnables.isEmpty()) return;
         this.runnables.poll().run();
     }
     
     public void runTask() {
-        if (this.runnables.size() == 0) return;
+        if (this.runnables.isEmpty()) return;
         this.runnables.poll().run();
     }
 
     public void runTasks() {
-        while (this.runnables.size() > 0) {
+        while (!this.runnables.isEmpty()) {
             this.runnables.poll().run();
         }
     }

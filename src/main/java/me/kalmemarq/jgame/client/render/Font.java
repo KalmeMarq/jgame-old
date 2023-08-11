@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import me.kalmemarq.jgame.client.render.shader.ShaderManager;
 import me.kalmemarq.jgame.client.resource.PreparationResourceReloader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
-import me.kalmemarq.jgame.common.StringHelper;
+import me.kalmemarq.jgame.common.StringUtils;
+import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,11 +19,10 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
     private Map<Integer, Glyph> glyphMap = new HashMap<>();
 
     public void drawString(String text, int x, int y, int colour) {
-        if (text == null || text.length() == 0) return;
-        char[] chrs = text.toCharArray();
+        if (text == null || text.isEmpty()) return;
         int xx = x;
         Renderer.setCurrentShader(ShaderManager::getPositionTextureColorShader);
-        Renderer.setShaderTexture(0, "font.png");
+        Renderer.setShaderTexture(0, "assets/minicraft/textures/font.png");
         Renderer.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         int r = (colour >> 16) & 0xFF;
@@ -34,13 +35,13 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
         
         builder.begin(VertexFormat.POSITION_TEXTURE_COLOR);
 
-        for (int i = 0; i < chrs.length; ++i) {
-            if (chrs[i] == ' ') {
+        for (int i = 0; i < text.length(); ++i) {
+            if (text.charAt(i) == ' ') {
                 xx += 8;
                 continue;
             }
 
-            Glyph glyph = this.glyphMap.get((int) chrs[i]);
+            Glyph glyph = this.glyphMap.get((int) text.charAt(i));
             if (glyph != null) {
                 builder.vertex(xx, y, 0).texture(glyph.u0, glyph.v0).colour(r, g, b, a).next();
                 builder.vertex(xx, y + 8, 0).texture(glyph.u0, glyph.v1).colour(r, g, b, a).next();
@@ -50,6 +51,42 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
             }
         }
         
+        tessellator.draw();
+    }
+
+    public void drawString(Matrix4f matrix, String text, int x, int y, int colour) {
+        if (text == null || text.isEmpty()) return;
+        int xx = x;
+        Renderer.setCurrentShader(ShaderManager::getPositionTextureColorShader);
+        Renderer.setShaderTexture(0, "assets/minicraft/textures/font.png");
+        Renderer.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        int r = (colour >> 16) & 0xFF;
+        int g = (colour >> 8) & 0xFF;
+        int b = colour & 0xFF;
+        int a = (colour >> 24) & 0xFF;
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder builder = tessellator.getBufferBuilder();
+
+        builder.begin(VertexFormat.POSITION_TEXTURE_COLOR);
+
+        for (int i = 0; i < text.length(); ++i) {
+            if (text.charAt(i) == ' ') {
+                xx += 8;
+                continue;
+            }
+
+            Glyph glyph = this.glyphMap.get((int) text.charAt(i));
+            if (glyph != null) {
+                builder.vertex(matrix, xx, y, 0).texture(glyph.u0, glyph.v0).colour(r, g, b, a).next();
+                builder.vertex(matrix, xx, y + 8, 0).texture(glyph.u0, glyph.v1).colour(r, g, b, a).next();
+                builder.vertex(matrix, xx + 8, y + 8, 0).texture(glyph.u1, glyph.v1).colour(r, g, b, a).next();
+                builder.vertex(matrix, xx + 8, y, 0).texture(glyph.u1, glyph.v0).colour(r, g, b, a).next();
+                xx += glyph.advance;
+            }
+        }
+
         tessellator.draw();
     }
 
@@ -88,7 +125,7 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
         Map<Integer, Glyph> map = new HashMap<>();
 
         try {
-            JsonNode fontObj = mapper.readTree(StringHelper.readString(resourceManager.getResource("font.json").getAsInputStream()));
+            JsonNode fontObj = mapper.readTree(StringUtils.readString(resourceManager.getResource("assets/minicraft/fonts/font.json").getAsInputStream()));
             int advance = fontObj.has("advance") ? fontObj.get("advance").intValue() : 8;
 
             if (fontObj.isObject()) {
@@ -100,7 +137,7 @@ public class Font extends PreparationResourceReloader<Map<Integer, Font.Glyph>> 
 
                     for (int j = 0; j < a.length; ++j) {
                         int colU = j * 8;
-                        if (a[j] == '\u0000') continue;
+                        if (a[j] == '\u0000' || map.containsKey((int) a[j])) continue;
                         map.put((int) a[j], new Glyph((colU) / 256.0f, (rowV) / 256.0f, (colU + 8) / 256.0f, (rowV + 8) / 256.0f, advance));
                     }
                 }

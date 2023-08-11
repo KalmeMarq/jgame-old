@@ -1,15 +1,13 @@
 package me.kalmemarq.jgame.client.render;
 
-import org.lwjgl.opengl.GL11;
-
 public enum DrawMode {
-    QUADS(GL11.GL_TRIANGLES),
-    TRIANGLES(GL11.GL_TRIANGLES);
+    QUADS(Renderer.PrimitiveType.TRIANGLES),
+    TRIANGLES(Renderer.PrimitiveType.TRIANGLES);
 
     public final int glType;
 
-    DrawMode(int glType) {
-        this.glType = glType;
+    DrawMode(Renderer.PrimitiveType type) {
+        this.glType = type.glType;
     }
 
     public int getIndexCount(int vertexCount) {

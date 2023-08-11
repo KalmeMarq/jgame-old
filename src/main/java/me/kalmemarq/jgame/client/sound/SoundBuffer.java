@@ -28,8 +28,7 @@ public class SoundBuffer implements Destroyable {
         try {
             p = Paths.get(resource.toURI()).toFile();
         } catch (URISyntaxException e) {
-            SoundManager.LOGGER.error("Failed to get resource url for  " + path);
-            e.printStackTrace();
+            SoundManager.LOGGER.error("Failed to get resource url for {}: {}", path, e);
             MemoryStack.stackPop();
             MemoryStack.stackPop();
             return;
@@ -40,7 +39,7 @@ public class SoundBuffer implements Destroyable {
         if (b == null) {
             MemoryStack.stackPop();
             MemoryStack.stackPop();
-            SoundManager.LOGGER.error("Failed to decode sound buffer " + path);
+            SoundManager.LOGGER.error("Failed to decode sound buffer {}", path);
             return;
         }
 

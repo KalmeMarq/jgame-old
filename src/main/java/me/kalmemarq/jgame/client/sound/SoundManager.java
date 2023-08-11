@@ -2,7 +2,7 @@ package me.kalmemarq.jgame.client.sound;
 
 import me.kalmemarq.jgame.client.Client;
 import me.kalmemarq.jgame.common.Destroyable;
-import me.kalmemarq.jgame.common.MathHelper;
+import me.kalmemarq.jgame.common.MathUtils;
 import me.kalmemarq.jgame.common.logger.Logger;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
@@ -60,9 +60,8 @@ public class SoundManager implements Destroyable {
 
         LOGGER.info("Using OpenAL: {} by {}", AL10.alGetString(AL10.AL_RENDERER), AL10.alGetString(AL10.AL_VENDOR));
         LOGGER.info("Current device: {}", this.getCurrentDeviceName());
-        LOGGER.info("Available devices: {}", this.getDevices().stream().reduce("", (res, vl) -> {
-            return res + (res.isEmpty() ? "" :  ", ") + vl;
-        }));
+        LOGGER.info("Available devices: {}", this.getDevices().stream().reduce("", (res, vl) ->
+            res + (res.isEmpty() ? "" :  ", ") + vl));
     }
 
     public String getCurrentDeviceName() {
@@ -84,13 +83,13 @@ public class SoundManager implements Destroyable {
         if (!this.initialized) return;
         if (!Client.getInstance().options.sound.getValue()) return;
 
-        float volume = MathHelper.clamp(instance.getVolume(), 0.0f, 1.0f);
+        float volume = MathUtils.clamp(instance.getVolume(), 0.0f, 1.0f);
 
         if (volume == 0.0f) {
             return;
         }
 
-        float pitch = MathHelper.clamp(instance.getVolume(), 0.5f, 2.0f);
+        float pitch = MathUtils.clamp(instance.getVolume(), 0.5f, 2.0f);
 
         SoundSource source = new SoundSource();
         source.setVolume(volume);

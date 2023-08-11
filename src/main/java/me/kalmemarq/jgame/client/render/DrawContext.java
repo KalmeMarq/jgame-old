@@ -1,16 +1,27 @@
 package me.kalmemarq.jgame.client.render;
 
 import me.kalmemarq.jgame.client.Client;
+import me.kalmemarq.jgame.client.render.shader.ShaderManager;
 
 public class DrawContext {
     private final Client client;
+    private final MatrixStack matrices;
     
     public DrawContext(Client client) {
         this.client = client;
+        this.matrices = new MatrixStack();
     }
-    
+
+    public MatrixStack getMatrices() {
+        return this.matrices;
+    }
+
     public void drawString(String text, int x, int y, int colour) {
         this.client.font.drawString(text, x, y, colour);
+    }
+
+    public void drawStringM(String text, int x, int y, int colour) {
+        this.client.font.drawString(this.matrices.peek(), text, x, y, colour);
     }
     
     public void drawTexture(String name, int x, int y, int z, int width, int height, int u, int v, int us, int vs, int textureWidth, int textureHeight, int tint) {

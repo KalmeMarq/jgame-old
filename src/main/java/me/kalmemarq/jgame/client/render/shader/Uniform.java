@@ -1,4 +1,4 @@
-package me.kalmemarq.jgame.client.render;
+package me.kalmemarq.jgame.client.render.shader;
 
 import me.kalmemarq.jgame.common.Destroyable;
 import org.joml.Matrix2f;

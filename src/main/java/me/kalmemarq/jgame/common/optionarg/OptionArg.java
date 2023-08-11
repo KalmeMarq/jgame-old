@@ -2,6 +2,7 @@ package me.kalmemarq.jgame.common.optionarg;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class OptionArg<T> {
     protected final String name;
@@ -23,11 +24,6 @@ public class OptionArg<T> {
         return this;
     }
 
-    public OptionArg<T> optional() {
-        this.required = false;
-        return this;
-    }
-
     public OptionArg<T> defaultsTo(T value) {
         this.defaultValue = value;
         return this;
@@ -43,6 +39,10 @@ public class OptionArg<T> {
 
     public T value() {
         return this.has() ? this.value : this.defaultValue;
+    }
+    
+    public void ifHas(Consumer<T> consumer) {
+        if (this.has()) consumer.accept(this.value);
     }
 
     @SuppressWarnings("unchecked")

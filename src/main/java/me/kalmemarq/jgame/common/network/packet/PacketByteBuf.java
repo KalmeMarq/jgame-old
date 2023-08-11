@@ -20,12 +20,28 @@ public class PacketByteBuf {
         return this.buffer.readByte();
     }
 
+    public short readUnsignedByte() {
+        return this.buffer.readUnsignedByte();
+    }
+
     public void writeShort(int value) {
         this.buffer.writeShort(value);
     }
 
     public short readShort() {
         return this.buffer.readShort();
+    }
+
+    public int readUnsignedShort() {
+        return this.buffer.readUnsignedShort();
+    }
+    
+    public void writeMedium(int value) {
+        this.buffer.writeMedium(value);
+    }
+
+    public int readMedium() {
+        return this.buffer.readMedium();
     }
 
     public void writeInt(int value) {

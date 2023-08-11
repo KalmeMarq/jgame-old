@@ -1,4 +1,15 @@
 {
+  "blend": {
+    "equation_rgb": "add",
+    "equation_alpha": "add",
+    "src_color": "one",
+    "src_alpha": "zero",
+    "dst_color": "one",
+    "dst_alpha": "zero"
+  },
+  "cull": {
+    "mode": "none"
+  },
   "vertex": "blit",
   "fragment": "blit",
   "attributes": [
