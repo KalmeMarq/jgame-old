@@ -198,7 +198,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         if (this.resourceLoader.isActive()) {
             if (ShaderManager.hasLoadedInitial()) {
                 context.drawColoured(0, this.window.getScaledHeight() - 23, 0, (int) (this.window.getScaledWidth() * this.resourceLoader.getProgress()), 12, 0xFF_FFFFFF);
-                context.drawString(": " + (int)(this.resourceLoader.getProgress() * 100) + "%", 1, this.window.getScaledHeight() - 40, 0xFF_FFFFFF);
+                context.drawString("Progress: " + (int)(this.resourceLoader.getProgress() * 100) + "%", 1, this.window.getScaledHeight() - 40, 0xFF_FFFFFF);
             }
         } else {
             

@@ -48,7 +48,7 @@ public class VertexBuffer implements Destroyable {
             GL15.glBufferSubData(GL15.GL_ARRAY_BUFFER, 0, builtBuffer.buffer());
         }
 
-        this.indexCount = this.mode.getIndexCount(builtBuffer.indexCount());
+        this.indexCount = builtBuffer.indexCount();
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.ibo);
 
         if (this.indexCount > this.lastIndexSize || this.indexBuffer == null) {
