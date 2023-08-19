@@ -4,7 +4,7 @@ import me.kalmemarq.jgame.client.Client;
 import me.kalmemarq.jgame.common.optionarg.OptionArg;
 import me.kalmemarq.jgame.common.optionarg.OptionArgParser;
 import me.kalmemarq.jgame.common.logger.Logger;
-import me.kalmemarq.jgame.common.logger.LoggerPrintStream;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.Configuration;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public class Main {
             Configuration.DEBUG_STREAM.set(true);
             Logger.setLogLevel(Logger.LogLevel.DEBUG);
         }
-
+        
         Client client = new Client(gameDir.toPath(), debugImGuiArg.value(), debugLWJGLArg.value());
 //        System.setOut(new LoggerPrintStream("SystemOut", System.out, false, debugLWJGLArg.value()));
 //        System.setErr(new LoggerPrintStream("SystemError", System.err, true, debugLWJGLArg.value()));

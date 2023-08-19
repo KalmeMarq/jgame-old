@@ -1,16 +1,11 @@
 package me.kalmemarq.jgame.client.sound;
 
 import me.kalmemarq.jgame.client.Client;
+import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.MathUtils;
 import me.kalmemarq.jgame.common.logger.Logger;
-import org.lwjgl.openal.AL;
-import org.lwjgl.openal.AL10;
-import org.lwjgl.openal.ALC;
-import org.lwjgl.openal.ALC10;
-import org.lwjgl.openal.ALC11;
-import org.lwjgl.openal.ALCCapabilities;
-import org.lwjgl.openal.ALUtil;
+import org.lwjgl.openal.*;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -30,8 +25,16 @@ public class SoundManager implements Destroyable {
 
     private final Map<String, SoundBuffer> buffers = new HashMap<>();
     private final Map<SoundInstance, SoundSource> sources = new HashMap<>();
+    private final ResourceManager resourceManager;
+    private long lastDeviceCheckTime;
+    
+    public SoundManager(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
+    }
 
     public void init() {
+        if (this.initialized) return;
+        
         LOGGER.info("Initializing OpenAL");
 
         this.device = ALC10.alcOpenDevice((ByteBuffer) null);
@@ -62,6 +65,10 @@ public class SoundManager implements Destroyable {
         LOGGER.info("Current device: {}", this.getCurrentDeviceName());
         LOGGER.info("Available devices: {}", this.getDevices().stream().reduce("", (res, vl) ->
             res + (res.isEmpty() ? "" :  ", ") + vl));
+    }
+    
+    public boolean isDeviceUnavailable() {
+        return ALC11.alcGetInteger(this.device, EXTDisconnect.ALC_CONNECTED) == 0;
     }
 
     public String getCurrentDeviceName() {
@@ -98,7 +105,7 @@ public class SoundManager implements Destroyable {
 
         SoundBuffer buffer = this.buffers.get(instance.getPath());
         if (buffer == null) {
-            buffer = new SoundBuffer(instance.getPath());
+            buffer = new SoundBuffer(instance.getPath(), this.resourceManager);
             this.buffers.put(instance.getPath(), buffer);
         }
 
@@ -109,6 +116,18 @@ public class SoundManager implements Destroyable {
     }
 
     public void tick() {
+        long now = System.currentTimeMillis();
+        if (now - this.lastDeviceCheckTime >= 1000L) {
+            this.lastDeviceCheckTime = now;
+
+            if (this.isDeviceUnavailable()) {
+                this.stopAll();
+                this.destroy();
+                this.initialized = false;
+                this.init();
+            }
+        }
+        
         Iterator<Map.Entry<SoundInstance, SoundSource>> iterator = this.sources.entrySet().iterator();
 
         while (iterator.hasNext()) {

@@ -1,0 +1,12 @@
+{
+  "menu.singleplayer": "Singleplayer",
+  "menu.multiplayer": "Multiplayer",
+  "menu.options": "Options",
+  "menu.quit": "Quit",
+  "menu.version": "Version %s",
+  "menu.connect": "Connect",
+  "menu.back": "Back",
+  "menu.server_ip": "Ip:",
+  "menu.server_port": "Port:",
+  "test": "á à"
+}

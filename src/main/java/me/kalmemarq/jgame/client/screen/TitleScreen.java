@@ -6,8 +6,9 @@ import me.kalmemarq.jgame.client.sound.SoundInstance;
 import org.lwjgl.glfw.GLFW;
 
 public class TitleScreen extends Screen {
-    private String[] items = {
-        "Connect",
+    private final String[] items = {
+        "Singleplayer",
+        "Multiplayer",
         "Options",
         "Quit"
     };
@@ -19,11 +20,13 @@ public class TitleScreen extends Screen {
         Renderer.enableBlend();
         Renderer.defaultBlendFunc();
         
-        context.drawTexture("assets/minicraft/textures/title.png", this.width / 2 - 56 - 20, 150, 0, 112, 16, 0, 0, 112, 16, 112, 16, 0xFF_FFFFFF);
+        context.drawTexture("assets/minicraft/textures/title.png", this.width / 2 - 56, 30, 0, 112, 16, 0, 0, 112, 16, 112, 16, 0xFF_FFFFFF);
 
         for (int i = 0; i < this.items.length; ++i) {
-            context.drawString(this.items[i], this.width / 2 - this.client.font.textWidth(this.items[i]) / 2, 45 + (i * 10), 0xFF_FFFFFF);
+            context.drawString(this.items[i], this.width / 2 - this.client.font.textWidth(this.items[i]) / 2, 75 + (i * 10), this.selectedIdx == i ? 0xFF_FFFFFF : 0xFF_999999);
         }
+        
+        context.drawString("Version 1.0.0", 1, 1, 0xFF_777777);
 
         Renderer.disableBlend();
     }
@@ -33,13 +36,13 @@ public class TitleScreen extends Screen {
         if (key == GLFW.GLFW_KEY_UP) {
             --this.selectedIdx;
             if (this.selectedIdx < 0) this.selectedIdx = 3;
-            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_DOWN) {
             ++this.selectedIdx;
             if (this.selectedIdx >= this.items.length) this.selectedIdx = 0;
-            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_SPACE) {

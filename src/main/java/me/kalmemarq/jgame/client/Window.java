@@ -1,8 +1,6 @@
 package me.kalmemarq.jgame.client;
 
-import io.netty.buffer.ByteBuf;
 import me.kalmemarq.jgame.client.render.Renderer;
-import me.kalmemarq.jgame.client.render.texture.MinicraftImage;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.OperatingSystem;
 import org.lwjgl.glfw.Callbacks;
@@ -157,7 +155,7 @@ public class Window implements Destroyable {
                 for (int i = 0, j = 0; i < iconStreams.length; ++i) {
                     ByteBuffer buffer;
                     try {
-                        buffer = readIcon(iconStreams[i]);
+                        buffer = MemoryUtils.readAsByteBuffer(iconStreams[i]);
                     } catch (IOException e) {
                         continue;
                     }
@@ -192,23 +190,6 @@ public class Window implements Destroyable {
             }
         } else if (platform == GLFW.GLFW_PLATFORM_COCOA) {
             // TODO: https://github.com/shannah/Java-Objective-C-Bridge
-        }
-    }
-    
-    private ByteBuffer readIcon(InputStream inputStream) throws IOException {
-        ReadableByteChannel channel = Channels.newChannel(inputStream);
-        ByteBuffer buffer = MemoryUtil.memAlloc(channel instanceof SeekableByteChannel ? ((int) ((SeekableByteChannel) channel).size() + 1)  : 8192);
-        
-        try {
-            while (channel.read(buffer) != -1) {
-                if (!buffer.hasRemaining()) {
-                    buffer = MemoryUtil.memRealloc(buffer, (int) (buffer.capacity() * 1.5));
-                }
-            }
-            return buffer;
-        } catch (IOException e) {
-            MemoryUtil.memFree(buffer);
-            throw e;
         }
     }
 

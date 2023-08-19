@@ -9,13 +9,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import me.kalmemarq.jgame.client.render.*;
 import me.kalmemarq.jgame.client.render.shader.ShaderManager;
 import me.kalmemarq.jgame.client.render.texture.TextureManager;
-import me.kalmemarq.jgame.client.screen.ConnectScreen;
 import me.kalmemarq.jgame.client.screen.ScreenStack;
 import me.kalmemarq.jgame.client.screen.TitleScreen;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.MemoryUnit;
 import me.kalmemarq.jgame.common.ThreadExecutor;
-import me.kalmemarq.jgame.common.Util;
+import me.kalmemarq.jgame.common.ThreadUtils;
 import me.kalmemarq.jgame.common.network.ClientNetworkHandler;
 import me.kalmemarq.jgame.client.resource.ResourceLoader;
 import me.kalmemarq.jgame.client.resource.ResourceManager;
@@ -28,7 +27,6 @@ import me.kalmemarq.jgame.common.network.NetworkConnection;
 import me.kalmemarq.jgame.common.network.packet.HandshakeC2SPacket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
@@ -42,7 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class Client extends ThreadExecutor implements Destroyable, Window.WindowEventHandler {
+public class Client extends ThreadExecutor<Runnable> implements Destroyable, Window.WindowEventHandler {
     private static Client INSTANCE;
     private static final Logger LOGGER = Logger.getLogger();
     
@@ -76,7 +74,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         this.options.debugLWJGL = debugLWJGL;
         this.options.debugImGui = debugImGui;
         this.window = new Window(288 * 3, 192 * 3, "JGame", this.options.vsync.getValue());
-        this.soundManager = new SoundManager();
+        this.soundManager = new SoundManager(this.resourceManager);
         this.textureManager = new TextureManager(this.resourceManager);
         this.font = new Font();
         this.resourceLoader = new ResourceLoader();
@@ -102,7 +100,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     }
     
     private void reloadResources() {
-        this.resourceLoader.start(List.of(this.shaderManager, this.textureManager, this.font), Util.RELOADER_WORKER.get(), this, this.resourceManager, () -> {
+        this.resourceLoader.start(List.of(this.shaderManager, this.textureManager, this.font), ThreadUtils.RELOADER_WORKER.get(), this, this.resourceManager, () -> {
         });
     }
 
@@ -115,12 +113,17 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         
         this.framebuffer.resize(this.window.getFramebufferWidth(), this.window.getFramebufferHeight());
         
-        GLAllocationUtils.setupAllocator(this.options.debugLWJGL);
+        MemoryUtils.setupAllocator(this.options.debugLWJGL);
         if (this.options.debugImGui) {
             this.imGuiLayer.init();
         }
         this.soundManager.init();
         this.running = true;
+
+
+        System.out.println(GL11.glGetString(GL11.GL_VENDOR));
+        System.out.println(GL11.glGetString(GL11.GL_RENDERER));
+        System.out.println(GL11.glGetString(GL11.GL_VERSION));
 
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -137,7 +140,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
             while (this.running) {
                 if (this.window.shouldClose()) this.running = false;
 
-                this.runQueueTask();
+                this.runTasks();
 
                 long now = System.nanoTime();
                 double nsPerTick = 1E9D / 20;
@@ -149,19 +152,19 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
                     unprocessed--;
                 }
 
-//                this.framebuffer.begin();
+                this.framebuffer.begin();
                 Renderer.clear(true, true, false);
 //                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_LINE);
                 this.render();
 //                GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
 
-//                this.framebuffer.end();
+                this.framebuffer.end();
                 
-//                Renderer.clear(true, false, false);
-//                Renderer.setProjectionMatrixIdentity();
-//                Renderer.setModelViewMatrixIdentity();
+                Renderer.clear(true, false, false);
+                Renderer.setProjectionMatrixIdentity();
+                Renderer.setModelViewMatrixIdentity();
 //
-//                this.framebuffer.draw();
+                this.framebuffer.draw();
                 
                 this.window.swapBuffers();
 
@@ -186,6 +189,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     }
 
     private void tick() {
+        this.soundManager.tick();
     }
     
     private void render() {
@@ -207,33 +211,33 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
 
             this.screenStack.render(context);
 
-//            long maxMem = Runtime.getRuntime().maxMemory();
-//            long totalMem = Runtime.getRuntime().totalMemory();
-//            long freeMem = Runtime.getRuntime().freeMemory();
-//            long availMem = totalMem - freeMem;
-//
-//            String[] texts = {
-//                "Java: " + System.getProperty("java.version"),
-//                String.format(Locale.ROOT, "Mem: % 2d%% %03d/%03dMB", availMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(availMem), (long) MemoryUnit.BYTES.toMiB(maxMem)),
-//                String.format(Locale.ROOT, "Allocation rate: %dMB /s", (long) MemoryUnit.BYTES.toMiB(this.allocationRateCalculator.get(availMem))),
-//                String.format(Locale.ROOT, "Allocated: % 2d%% %03dMB", totalMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(totalMem))
-//            };
-//            int y = 1;
-//
-//            context.getMatrices().push();
-//            context.getMatrices().scale(0.6666f, 0.6666f, 0.6666f);
-//            
-//            Renderer.enableBlend();
-//            Renderer.blendFunction(Renderer.BlendFactor.SRC_ALPHA, Renderer.BlendFactor.ONE_MINUS_SRC_ALPHA);
-//            
-//            for (int i = 0; i < texts.length; ++i) {
-//                context.drawStringM(texts[i], 0, y, 0xFF_FFFFFF);
-//                y += 9;
-//            }
-//            
-//            Renderer.disableBlend();
-//            
-//            context.getMatrices().pop();
+            long maxMem = Runtime.getRuntime().maxMemory();
+            long totalMem = Runtime.getRuntime().totalMemory();
+            long freeMem = Runtime.getRuntime().freeMemory();
+            long availMem = totalMem - freeMem;
+
+            String[] texts = {
+                "Java: " + System.getProperty("java.version"),
+                String.format(Locale.ROOT, "Mem: % 2d%% %03d/%03dMB", availMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(availMem), (long) MemoryUnit.BYTES.toMiB(maxMem)),
+                String.format(Locale.ROOT, "Allocation rate: %dMB /s", (long) MemoryUnit.BYTES.toMiB(this.allocationRateCalculator.get(availMem))),
+                String.format(Locale.ROOT, "Allocated: % 2d%% %03dMB", totalMem * 100L / maxMem, (long) MemoryUnit.BYTES.toMiB(totalMem))
+            };
+            int y = 1;
+
+            context.getMatrices().push();
+            context.getMatrices().scale(0.6666f, 0.6666f, 0.6666f);
+
+            Renderer.enableBlend();
+            Renderer.blendFunction(Renderer.BlendFactor.SRC_ALPHA, Renderer.BlendFactor.ONE_MINUS_SRC_ALPHA);
+
+            for (int i = 0; i < texts.length; ++i) {
+                context.drawStringM(texts[i], 0, y, 0xFF_FFFFFF);
+                y += 9;
+            }
+
+            Renderer.disableBlend();
+
+            context.getMatrices().pop();
         }
     }
 
@@ -281,13 +285,13 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
 
     @Override
     public void destroy() {
-        Util.shutdownExecutors();
+        ThreadUtils.shutdownExecutors();
         if (this.options.debugImGui) {
             this.imGuiLayer.destroy();
         }
         this.shaderManager.destroy();
         this.textureManager.destroy();
-        GLAllocationUtils.cleanup();
+        MemoryUtils.cleanup();
         this.window.destroy();
     }
 
@@ -296,7 +300,7 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
         LOGGER.debug("Resizing framebuffer");
         this.framebuffer.resize(this.window.getFramebufferWidth(), this.window.getFramebufferHeight());
         GL11.glViewport(0, 0, this.window.getFramebufferWidth(), this.window.getFramebufferHeight());
-        this.screenStack.resize(this.window.getFramebufferWidth(), this.window.getFramebufferHeight());
+        this.screenStack.resize(this.window.getScaledWidth(), this.window.getScaledHeight());
     }
 
     @Override
@@ -304,7 +308,12 @@ public class Client extends ThreadExecutor implements Destroyable, Window.Window
     }
 
     @Override
-    public Thread getMainThread() {
+    public Runnable createTask(Runnable runnable) {
+        return runnable;
+    }
+
+    @Override
+    public Thread getRequiredThread() {
         return this.clientThread;
     }
 

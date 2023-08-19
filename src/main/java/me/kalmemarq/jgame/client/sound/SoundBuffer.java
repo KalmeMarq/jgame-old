@@ -1,21 +1,22 @@
 package me.kalmemarq.jgame.client.sound;
 
+import me.kalmemarq.jgame.client.MemoryUtils;
+import me.kalmemarq.jgame.client.resource.Resource;
+import me.kalmemarq.jgame.client.resource.ResourceManager;
 import me.kalmemarq.jgame.common.Destroyable;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.stb.STBVorbis;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.nio.file.Paths;
 
 public class SoundBuffer implements Destroyable {
     public int id;
-
-    public SoundBuffer(String path) {
+    
+    public SoundBuffer(String path, ResourceManager resourceManager) {
         this.id = AL10.alGenBuffers();
 
         MemoryStack.stackPush();
@@ -23,19 +24,21 @@ public class SoundBuffer implements Destroyable {
         MemoryStack.stackPush();
         IntBuffer pSampleRate = MemoryStack.stackMallocInt(1);
 
-        URL resource = SoundBuffer.class.getResource(path);
-        File p;
+        Resource resource = resourceManager.getResource(path);
+
+        ByteBuffer buffer;
         try {
-            p = Paths.get(resource.toURI()).toFile();
-        } catch (URISyntaxException e) {
-            SoundManager.LOGGER.error("Failed to get resource url for {}: {}", path, e);
-            MemoryStack.stackPop();
-            MemoryStack.stackPop();
+            buffer = MemoryUtils.readAsByteBuffer(resource.getAsInputStream());
+            buffer.flip();
+        } catch (Exception e) {
+            SoundManager.LOGGER.error("Failed to read sound: {}", e);
             return;
         }
-
-        ShortBuffer b = STBVorbis.stb_vorbis_decode_filename(p.getAbsolutePath(), pChannels, pSampleRate);
-
+        
+        ShortBuffer b = STBVorbis.stb_vorbis_decode_memory(buffer, pChannels, pSampleRate);
+        
+        MemoryUtil.memFree(buffer);
+        
         if (b == null) {
             MemoryStack.stackPop();
             MemoryStack.stackPop();

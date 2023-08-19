@@ -1,0 +1,7 @@
+{
+  "ui.select": {
+    "sounds": [
+      "minicraft:sounds/select"
+    ]
+  }
+}

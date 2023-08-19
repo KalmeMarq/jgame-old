@@ -1,9 +1,9 @@
 package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.client.MemoryUtils;
 import me.kalmemarq.jgame.common.Destroyable;
 import org.joml.Math;
 import org.joml.Matrix4f;
-import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -19,7 +19,7 @@ public class BufferBuilder implements VertexConsumer, Destroyable {
     private int vertexCount;
     
     public BufferBuilder(int capacity) {
-        this.buffer = GLAllocationUtils.allocateByteBuffer(capacity);
+        this.buffer = MemoryUtils.allocateByteBuffer(capacity);
     }
 
     public void begin(VertexFormat format) {
@@ -131,7 +131,7 @@ public class BufferBuilder implements VertexConsumer, Destroyable {
 
     @Override
     public void destroy() {
-        GLAllocationUtils.freeByteBuffer(this.buffer);
+        MemoryUtils.freeByteBuffer(this.buffer);
     }
 
     public class BuiltBuffer {

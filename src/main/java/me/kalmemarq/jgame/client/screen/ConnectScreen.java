@@ -31,13 +31,13 @@ public class ConnectScreen extends Screen {
         if (key == GLFW.GLFW_KEY_UP) {
             --this.selectedIdx;
             if (this.selectedIdx < 0) this.selectedIdx = 3;
-            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_DOWN) {
             ++this.selectedIdx;
             if (this.selectedIdx >= 4) this.selectedIdx = 0;
-            this.client.soundManager.play(new SoundInstance("/assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
+            this.client.soundManager.play(new SoundInstance("assets/minicraft/sounds/select.ogg", 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, false));
         }
 
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_SPACE) {

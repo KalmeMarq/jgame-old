@@ -1,5 +1,6 @@
 package me.kalmemarq.jgame.client.render;
 
+import me.kalmemarq.jgame.client.MemoryUtils;
 import me.kalmemarq.jgame.client.render.shader.Shader;
 import me.kalmemarq.jgame.common.Destroyable;
 import me.kalmemarq.jgame.common.logger.Logger;
@@ -60,9 +61,9 @@ public class VertexBuffer implements Destroyable {
             int indexTypeSize = this.indexType.byteSize;
 
             if (this.indexBuffer == null) {
-                this.indexBuffer = GLAllocationUtils.allocateByteBuffer(this.indexCount * indexTypeSize);
+                this.indexBuffer = MemoryUtils.allocateByteBuffer(this.indexCount * indexTypeSize);
             } else {
-                this.indexBuffer = GLAllocationUtils.reallocateByteBuffer(this.indexBuffer, this.indexCount * indexTypeSize);
+                this.indexBuffer = MemoryUtils.reallocateByteBuffer(this.indexBuffer, this.indexCount * indexTypeSize);
             }
             
             for (int j = 0, k = 0; j < this.indexCount / 6; ++j, k += 6 * indexTypeSize) {
@@ -134,7 +135,7 @@ public class VertexBuffer implements Destroyable {
     @Override
     public void destroy() {
         if (this.indexBuffer != null) {
-            GLAllocationUtils.freeByteBuffer(this.indexBuffer);
+            MemoryUtils.freeByteBuffer(this.indexBuffer);
         }
         
         if (this.vao == -1) {

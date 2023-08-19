@@ -24,7 +24,7 @@ public class Identifier implements Comparable<Identifier> {
             }
         }
         
-        if (arr[0].length() == 0) {
+        if (arr[0].isEmpty()) {
             throw new InvalidIdentifierException("'" + id + "' identifier is missing a namespace.");
         }
         

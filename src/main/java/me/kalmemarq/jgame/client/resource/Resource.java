@@ -5,20 +5,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 public class Resource {
-    private final InputStream inputStream;
+    private final Supplier<InputStream> supplier;
     
-    public Resource(InputStream inputStream) {
-        this.inputStream = inputStream;
+    public Resource(Supplier<InputStream> supplier) {
+        this.supplier = supplier;
     }
 
     public InputStream getAsInputStream() {
-        return this.inputStream;
+        return this.supplier.get();
     }
 
     public BufferedReader getAsReader() {
-        return new BufferedReader(new InputStreamReader(this.inputStream, StandardCharsets.UTF_8));
+        return new BufferedReader(new InputStreamReader(this.supplier.get(), StandardCharsets.UTF_8));
     }
 
     public String getAsString() throws IOException {

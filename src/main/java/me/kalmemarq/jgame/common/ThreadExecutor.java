@@ -1,38 +1,56 @@
 package me.kalmemarq.jgame.common;
 
+import me.kalmemarq.jgame.common.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.LockSupport;
 
-public abstract class ThreadExecutor implements Executor {
-    private final Queue<Runnable> runnables = new ConcurrentLinkedQueue<>();
+public abstract class ThreadExecutor<R extends Runnable> implements Executor {
+    private static final Logger LOGGER = Logger.getLogger();
+    private final Queue<R> tasks = new ConcurrentLinkedQueue<>();
 
+    public boolean isOnRequiredThread() {
+        return Thread.currentThread() == this.getRequiredThread();
+    }
+    
+    abstract public R createTask(Runnable runnable);
+    
+    public void send(R runnable) {
+        this.tasks.add(runnable);
+        LockSupport.unpark(this.getRequiredThread());
+    }
+    
     @Override
     public void execute(@NotNull Runnable command) {
-        if (Thread.currentThread() == this.getMainThread()) {
+        if (this.isOnRequiredThread()) {
             command.run();
         } else {
-            this.runnables.add(command);
+            this.send(this.createTask(command));
         }
     }
     
-    public abstract Thread getMainThread();
-
-    public void runQueueTask() {
-        if (this.runnables.isEmpty()) return;
-        this.runnables.poll().run();
-    }
+    public abstract Thread getRequiredThread();
     
     public void runTask() {
-        if (this.runnables.isEmpty()) return;
-        this.runnables.poll().run();
+        if (this.tasks.isEmpty()) return;
+        this.tasks.poll().run();
     }
 
     public void runTasks() {
-        while (!this.runnables.isEmpty()) {
-            this.runnables.poll().run();
+        while (!this.tasks.isEmpty()) {
+            this.tasks.poll().run();
         }
+    }
+    
+    private void waitForTasks() {
+        Thread.yield();
+        LockSupport.parkNanos("", 100000L);
+    }
+    
+    public void cancelAllTasks() {
+        this.tasks.clear();
     }
 }

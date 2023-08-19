@@ -1,6 +1,8 @@
 build/
 bin/
+run/
 .gradle/
 .DS_STORE
 .vscode
 .idea
+out/

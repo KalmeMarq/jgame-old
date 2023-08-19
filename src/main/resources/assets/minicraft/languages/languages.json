@@ -1,0 +1,22 @@
+[
+  {
+    "code": "en_us",
+    "name": "English",
+    "region": "US"
+  },
+  {
+    "code": "en_gb",
+    "name": "English",
+    "region": "UK"
+  },
+  {
+    "code": "pt_pt",
+    "name": "Portugu\u00EAs",
+    "region": "Portugal"
+  },
+  {
+    "code": "pt_br",
+    "name": "Portugu\u00EAs",
+    "region": "Brasil"
+  }
+]

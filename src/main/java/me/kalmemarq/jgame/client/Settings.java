@@ -24,6 +24,7 @@ public class Settings {
     });
     public final Option<Boolean> sound = new BooleanOption("sound", true);
     public final Option<Integer> fps = new IntRangeOption("fps", 60, 30, 260);
+    public String language = "en_us";
     
     private final List<Option<?>> options = new ArrayList<>();
     protected boolean debugLWJGL;
@@ -48,6 +49,10 @@ public class Settings {
                     option.parseValue(root.get(option.getKey()).textValue());
                 }
             }
+            
+            if (root.hasNonNull("language")) {
+                this.language = root.get("language").textValue();
+            }
         } catch (IOException e) {
             LOGGER.warn("Failed to load settings: {}", e);
         }
@@ -59,6 +64,7 @@ public class Settings {
         for (Option<?> option : this.options) {
             root.put(option.getKey(), option.getStringifiedValue());
         }
+        root.put("language", this.language);
 
         try {
             Files.writeString(this.settingsPath, root.toPrettyString(), StandardCharsets.UTF_8);
